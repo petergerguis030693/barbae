@@ -1,0 +1,43 @@
+<% const posts = Array.isArray(magazinePosts) ? magazinePosts : []; %>
+<% if (posts.length) { %>
+  <section class="section magazine-home" aria-labelledby="magazineHomeTitle">
+    <div class="section-head magazine-head">
+      <div>
+        <p class="eyebrow">BarBae Magazin</p>
+        <h3 id="magazineHomeTitle">Wissenswertes aus Beauty, Styles & curated Looks</h3>
+      </div>
+      <div class="magazine-head-actions">
+        <a class="btn-outline magazine-link" href="/magazin">Zum Magazin</a>
+        <div class="magazine-nav-wrap" aria-label="Magazin Navigation">
+          <button type="button" class="magazine-nav magazine-prev" aria-label="Zurück">
+            <i class="bi bi-arrow-left"></i>
+          </button>
+          <button type="button" class="magazine-nav magazine-next" aria-label="Weiter">
+            <i class="bi bi-arrow-right"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="magazine-slider-shell">
+      <div class="magazine-slider-track" id="magazineTrack">
+        <% posts.slice(0, 5).forEach((post, index) => { %>
+          <article class="magazine-card magazine-slide <%= index === 0 ? 'magazine-card-lg' : 'magazine-card-sm' %>">
+            <a class="magazine-card-media" href="<%= post.blogUrl %>">
+              <img src="<%= post.heroImageUrl %>" alt="<%= post.cover_image_alt || post.title %>" loading="lazy" />
+            </a>
+            <div class="magazine-card-body">
+              <p class="magazine-meta-top"><%= post.category_label || 'BarBae Magazin' %></p>
+              <h4><a href="<%= post.blogUrl %>"><%= post.title %></a></h4>
+              <% if (post.excerpt) { %><p class="magazine-excerpt"><%= post.excerpt %></p><% } %>
+              <div class="magazine-meta-row">
+                <span><%= post.author_name || 'BarBae Redaktion' %></span>
+                <span><i class="bi bi-clock"></i> <%= Number(post.read_time_minutes || 0) %> Min.</span>
+              </div>
+            </div>
+          </article>
+        <% }) %>
+      </div>
+    </div>
+  </section>
+<% } %>

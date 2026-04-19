@@ -1,0 +1,30 @@
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Rechnung</th><th>Bestellung</th><th>Kunde</th><th>Ausgestellt</th><th>Gesendet</th><th>Aktionen</th></tr></thead>
+      <tbody>
+        <% data.invoices.forEach((invoice) => { %>
+          <tr>
+            <td><%= invoice.invoice_number %></td>
+            <td><a href="/admin/orders/<%= invoice.order_id %>"><%= invoice.order_number %></a></td>
+            <td>
+              <% if (invoice.customer_id) { %>
+                <a href="/admin/customers/<%= invoice.customer_id %>"><%= invoice.customer_name || '-' %></a>
+              <% } else { %>
+                <%= invoice.customer_name || '-' %>
+              <% } %>
+            </td>
+            <td><%= invoice.issued_at ? new Date(invoice.issued_at).toLocaleString('de-DE') : '-' %></td>
+            <td><%= invoice.sent_at ? new Date(invoice.sent_at).toLocaleString('de-DE') : '-' %></td>
+            <td class="d-flex gap-2">
+              <a class="btn btn-sm btn-outline-dark" href="/admin/invoices/<%= invoice.id %>/download">PDF</a>
+              <form method="post" action="/admin/invoices/<%= invoice.id %>/send">
+                <button class="btn btn-sm btn-outline-primary">E-Mail senden</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

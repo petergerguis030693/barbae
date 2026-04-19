@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <%- include('./partials/head-seo', { title, seoMeta: (typeof seoMeta !== 'undefined' ? seoMeta : null) }) %>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/css/store.css" />
+  </head>
+  <body>
+    <%- include('./partials/header', { hideOnTop: false }) %>
+
+    <main class="section checkout-page">
+      <h1>Checkout</h1>
+      <% if (error) { %>
+        <div class="checkout-error"><%= error %></div>
+      <% } %>
+
+      <div class="checkout-layout">
+        <section class="checkout-left">
+          <% if (!customerUser) { %>
+            <div class="checkout-auth-grid">
+              <form method="post" action="/checkout/login" class="checkout-auth-card">
+                <h3>Einloggen</h3>
+                <input name="login_email" type="email" placeholder="E-Mail" required />
+                <input name="login_password" type="password" placeholder="Passwort" required />
+                <button type="submit" class="btn-solid">Einloggen</button>
+              </form>
+
+              <form method="post" action="/checkout/register" class="checkout-auth-card">
+                <h3>Registrieren</h3>
+                <input name="first_name" placeholder="Vorname" required />
+                <input name="last_name" placeholder="Nachname" required />
+                <input name="email" type="email" placeholder="E-Mail" required />
+                <input name="password" type="password" placeholder="Passwort" required />
+                <button type="submit" class="btn-outline">Konto erstellen</button>
+              </form>
+            </div>
+          <% } else { %>
+            <div class="checkout-logged-in">
+              Eingeloggt als <strong><%= customerUser.email %></strong>
+              <form method="post" action="/checkout/logout">
+                <button type="submit" class="btn-outline">Abmelden</button>
+              </form>
+            </div>
+          <% } %>
+
+          <form method="post" action="/checkout/place-order" id="checkoutForm" class="checkout-form">
+            <input type="hidden" name="cart_json" id="checkoutCartJson" />
+
+            <div class="mode-switch">
+              <label><input type="radio" name="customer_mode" value="guest" <%= !customerUser ? 'checked' : '' %> /> Gast</label>
+              <label><input type="radio" name="customer_mode" value="register" /> Registrieren im Checkout</label>
+            </div>
+
+            <div class="checkout-grid">
+              <input name="first_name" placeholder="Vorname*" value="<%= draft.first_name || customerUser?.first_name || '' %>" required />
+              <input name="last_name" placeholder="Nachname*" value="<%= draft.last_name || customerUser?.last_name || '' %>" required />
+              <input name="email" type="email" placeholder="E-Mail*" value="<%= draft.email || customerUser?.email || '' %>" required />
+              <input name="phone" placeholder="Telefon" value="<%= draft.phone || customerUser?.phone || '' %>" />
+              <input name="street" placeholder="Straße + Hausnummer*" value="<%= draft.street || customerUser?.street || '' %>" required />
+              <input name="postal_code" placeholder="PLZ*" value="<%= draft.postal_code || customerUser?.postal_code || '' %>" required />
+              <input name="city" placeholder="Ort*" value="<%= draft.city || customerUser?.city || '' %>" required />
+              <input name="company_name" placeholder="Firma" value="<%= draft.company_name || customerUser?.company_name || '' %>" />
+              <input name="uid_number" placeholder="UID Nummer" value="<%= draft.uid_number || customerUser?.uid_number || '' %>" />
+              <input name="password" type="password" placeholder="Passwort (nur für Registrierung)" />
+            </div>
+
+            <div class="payment-block">
+              <h3>Rabattcode</h3>
+              <div class="checkout-coupon-row">
+                <input name="discount_code" id="checkoutDiscountCode" placeholder="Code eingeben" value="<%= draft.discount_code || '' %>" />
+                <button type="button" class="btn-outline" id="checkoutCouponApply">Anwenden</button>
+              </div>
+              <small id="checkoutCouponInfo" class="checkout-coupon-info"></small>
+            </div>
+
+            <div class="payment-block">
+              <h3>Erhalt</h3>
+              <label class="checkout-radio-option">
+                <input type="radio" name="fulfillment_method" value="delivery" checked />
+                <span class="checkout-radio-card">
+                  <i class="bi bi-truck"></i>
+                  <span>
+                    <strong>Lieferbar</strong>
+                    <small>Standard Versand an deine Adresse</small>
+                  </span>
+                </span>
+              </label>
+              <label class="checkout-radio-option">
+                <input type="radio" name="fulfillment_method" value="delivery_express" />
+                <span class="checkout-radio-card">
+                  <i class="bi bi-lightning-charge"></i>
+                  <span>
+                    <strong>Express Versand</strong>
+                    <small><%= Number(expressShippingPrice || 0).toFixed(2) %> EUR brutto</small>
+                  </span>
+                </span>
+              </label>
+              <label class="checkout-radio-option">
+                <input type="radio" name="fulfillment_method" value="click_collect" />
+                <span class="checkout-radio-card">
+                  <i class="bi bi-shop"></i>
+                  <span>
+                    <strong>Click &amp; Collect</strong>
+                    <small>Abholung im Shop</small>
+                  </span>
+                </span>
+              </label>
+            </div>
+
+            <div class="payment-block">
+              <h3>Zahlung</h3>
+              <label><input type="radio" name="payment_method" value="manual" checked /> Vorkasse</label>
+              <% if (paymentProviders.stripe) { %>
+                <label><input type="radio" name="payment_method" value="stripe" /> Stripe</label>
+              <% } %>
+              <% if (paymentProviders.klarna) { %>
+                <label><input type="radio" name="payment_method" value="klarna" /> Klarna</label>
+              <% } %>
+            </div>
+
+            <button type="submit" class="btn-solid">Jetzt verbindlich bestellen</button>
+          </form>
+        </section>
+
+        <aside class="checkout-summary" id="checkoutSummary">
+          <h3>Deine Bestellung</h3>
+          <div id="checkoutItems"></div>
+          <hr />
+          <div class="line"><span>Netto</span><strong id="checkoutNet">0.00 EUR</strong></div>
+          <div class="line"><span>Rabatt (netto)</span><strong id="checkoutDiscount">0.00 EUR</strong></div>
+          <div class="line"><span>MwSt. (20%)</span><strong id="checkoutTax">0.00 EUR</strong></div>
+          <div class="line"><span>Versand</span><strong id="checkoutShipping">0.00 EUR</strong></div>
+          <div class="line total"><span>Brutto</span><strong id="checkoutGross">0.00 EUR</strong></div>
+        </aside>
+      </div>
+      <%- include('./partials/seo-bottom', { seoBottom: (typeof seoBottom !== 'undefined' ? seoBottom : null) }) %>
+    </main>
+
+    <%- include('./partials/footer') %>
+
+    <script>
+      window.__STORE_DATA__ = {
+        searchItems: <%- JSON.stringify(searchItems).replace(/</g, '\\u003c') %>,
+        initialQuery: "",
+        checkoutPage: true,
+        expressShippingPrice: <%- JSON.stringify(Number(expressShippingPrice || 0)) %>
+      };
+    </script>
+    <script src="/js/store.js"></script>
+  </body>
+</html>

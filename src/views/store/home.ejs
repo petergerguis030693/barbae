@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <%- include('./partials/head-seo', { title, seoMeta: (typeof seoMeta !== 'undefined' ? seoMeta : null) }) %>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/css/store.css" />
+  </head>
+  <body>
+    <%- include('./partials/header', { hideOnTop: true }) %>
+
+    <main>
+      <%- include('./partials/hero-split') %>
+      <%- include('./partials/brand-values') %>
+      <%- include('./partials/highlights-slider') %>
+      <%- include('./partials/testimonials') %>
+      <%- include('./partials/magazine-home', { magazinePosts: (typeof magazinePosts !== 'undefined' ? magazinePosts : []) }) %>
+      <%- include('./partials/seo-bottom', { seoBottom: (typeof seoBottom !== 'undefined' ? seoBottom : null) }) %>
+    </main>
+
+    <%- include('./partials/footer') %>
+
+    <script>
+      window.__STORE_DATA__ = {
+        searchItems: <%- JSON.stringify(searchItems).replace(/</g, '\\u003c') %>,
+        initialQuery: <%- JSON.stringify(query).replace(/</g, '\\u003c') %>
+      };
+    </script>
+    <script src="/js/store.js"></script>
+  </body>
+</html>

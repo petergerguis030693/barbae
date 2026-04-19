@@ -1,0 +1,35 @@
+{
+  "name": "shop-admin-panel",
+  "version": "1.0.0",
+  "description": "Adminpanel fuer Onlineshop (nur /admin)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "seed:admin": "node src/scripts/seed-admin.js"
+  },
+  "keywords": [
+    "admin",
+    "express",
+    "ejs",
+    "mysql"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "dotenv": "^16.6.1",
+    "ejs": "^3.1.10",
+    "express": "^5.1.0",
+    "express-mysql-session": "^3.0.3",
+    "express-session": "^1.18.1",
+    "multer": "^2.0.2",
+    "mysql2": "^3.15.2",
+    "nodemailer": "^7.0.9",
+    "pdfkit": "^0.17.2",
+    "stripe": "^20.4.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  }
+}

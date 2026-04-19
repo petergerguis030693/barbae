@@ -1,0 +1,205 @@
+<% const mode = data.mode || 'create'; %>
+<% const post = data.post || {}; %>
+<% const isEdit = mode === 'edit'; %>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a class="btn btn-outline-secondary" href="/admin/blog">Zur Blog Liste</a>
+  <span class="text-muted small"><%= isEdit ? 'Artikel bearbeiten' : 'Neuer Artikel' %></span>
+</div>
+
+<form
+  method="post"
+  action="<%= isEdit ? ('/admin/blog/' + post.id + '/update') : '/admin/blog/create' %>"
+  class="row g-3"
+  data-blog-form
+>
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header">Inhalt</div>
+      <div class="card-body d-grid gap-3">
+        <div class="row g-2">
+          <div class="col-md-8">
+            <label class="form-label">Titel</label>
+            <input class="form-control" name="title" value="<%= post.title || '' %>" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Slug</label>
+            <input class="form-control" name="slug" value="<%= post.slug || '' %>" placeholder="wird-aus-titel-erzeugt" />
+          </div>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">Kategorie Label</label>
+            <input class="form-control" name="category_label" value="<%= post.category_label || '' %>" placeholder="Beauty Journal" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Hero Bild URL / Pfad</label>
+            <input class="form-control" name="hero_image_url" value="<%= post.hero_image_url || '' %>" placeholder="/uploads/..." />
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">Bild Alt Text</label>
+          <input class="form-control" name="cover_image_alt" value="<%= post.cover_image_alt || '' %>" />
+        </div>
+
+        <div>
+          <label class="form-label">Kurzbeschreibung (Excerpt)</label>
+          <textarea class="form-control" rows="3" name="excerpt"><%= post.excerpt || '' %></textarea>
+        </div>
+
+        <div>
+          <label class="form-label">Artikel Inhalt</label>
+          <textarea class="form-control" rows="16" name="content_html"><%= post.content_html || '' %></textarea>
+          <div class="form-text">CKEditor aktiv. Erlaubt sind u. a. Absätze, Listen, Links, Bilder und Überschriften.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4 d-grid gap-3">
+    <div class="card">
+      <div class="card-header">Meta</div>
+      <div class="card-body d-grid gap-2">
+        <div>
+          <label class="form-label">Autor</label>
+          <input class="form-control" name="author_name" value="<%= post.author_name || '' %>" />
+        </div>
+        <div>
+          <label class="form-label">Autor Bereich / Rolle</label>
+          <input class="form-control" name="author_role" value="<%= post.author_role || '' %>" placeholder="Beauty / Styles" />
+        </div>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label">Lesezeit (Min)</label>
+            <input class="form-control" type="number" min="1" name="read_time_minutes" value="<%= Number(post.read_time_minutes || 4) %>" />
+          </div>
+          <div class="col-6">
+            <label class="form-label">Sortierung</label>
+            <input class="form-control" type="number" name="sort_order" value="<%= Number(post.sort_order || 0) %>" />
+          </div>
+        </div>
+        <div>
+          <label class="form-label">Veröffentlicht am</label>
+          <input
+            class="form-control"
+            type="datetime-local"
+            name="published_at"
+            value="<%= post.published_at ? new Date(post.published_at).toISOString().slice(0,16) : '' %>"
+          />
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="is_published" value="1" id="blogPublished" <%= Number(post.is_published ?? 1) === 1 ? 'checked' : '' %> />
+          <label class="form-check-label" for="blogPublished">Veröffentlicht</label>
+        </div>
+        <div class="form-check">
+          <input class="form-check-input" type="checkbox" name="is_featured" value="1" id="blogFeatured" <%= Number(post.is_featured || 0) === 1 ? 'checked' : '' %> />
+          <label class="form-check-label" for="blogFeatured">Featured (Startseite bevorzugt)</label>
+        </div>
+      </div>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button class="btn btn-outline-secondary" type="button" data-blog-autofill="empty">Auto-Fill Artikel (nur leere Felder)</button>
+      <button class="btn btn-outline-secondary" type="button" data-blog-autofill="all">Auto-Fill Artikel (überschreiben)</button>
+      <button class="btn btn-dark" type="submit"><%= isEdit ? 'Artikel speichern' : 'Artikel anlegen' %></button>
+    </div>
+  </div>
+</form>
+
+<script>
+  (function () {
+    const form = document.querySelector('[data-blog-form]');
+    if (!form || form.dataset.blogAutofillBound === '1') return;
+    form.dataset.blogAutofillBound = '1';
+    const $ = (name) => form.querySelector(`[name="${name}"]`);
+    const fields = {
+      title: $('title'),
+      slug: $('slug'),
+      category_label: $('category_label'),
+      excerpt: $('excerpt'),
+      hero_image_url: $('hero_image_url'),
+      cover_image_alt: $('cover_image_alt'),
+      author_name: $('author_name'),
+      author_role: $('author_role'),
+      read_time_minutes: $('read_time_minutes'),
+      content_html: $('content_html')
+    };
+
+    function setValue(field, value, overwrite) {
+      if (!field || value == null) return;
+      if (!overwrite && String(field.value || '').trim()) return;
+      field.value = String(value);
+    }
+
+    function cleanSlug(v) {
+      return String(v || '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+    }
+
+    function presetFromTitle(title) {
+      const safeTitle = String(title || '').trim() || 'BarBae Magazin Artikel';
+      const isBeauty = /beauty|glow|pflege|hair|face|body/i.test(safeTitle);
+      const label = isBeauty ? 'Beauty Journal' : 'Style Guide';
+      const role = isBeauty ? 'Beauty' : 'Styles';
+      return {
+        slug: cleanSlug(safeTitle),
+        category_label: label,
+        excerpt: `${safeTitle} bei BarBae: Kuratierte Tipps, stilvolle Inspiration und alltagstaugliche Empfehlungen aus unserem Magazin.`,
+        cover_image_alt: safeTitle,
+        author_name: 'BarBae Redaktion',
+        author_role: role,
+        read_time_minutes: 4,
+        content_html:
+          `<p>${safeTitle} steht für einen kuratierten Blick auf Beauty, Stil und hochwertige Routinen im Alltag.</p>` +
+          `<h3>Worauf es ankommt</h3>` +
+          `<p>Ein starker Look entsteht durch eine klare Linie: passende Produkte, ausgewählte Details und ein harmonisches Gesamtbild.</p>` +
+          `<h3>BarBae Empfehlung</h3>` +
+          `<p>Setze auf Qualität, Kombinierbarkeit und ein ruhiges Styling-Konzept. So wirkt das Ergebnis hochwertig und zeitlos.</p>`
+      };
+    }
+
+    function applyPreset(overwrite) {
+      const title = fields.title ? fields.title.value : '';
+      const preset = presetFromTitle(title);
+      Object.entries(preset).forEach(([key, val]) => setValue(fields[key], val, overwrite));
+    }
+
+    form.querySelectorAll('[data-blog-autofill]').forEach((btn) => {
+      btn.addEventListener('click', () => applyPreset(btn.dataset.blogAutofill === 'all'));
+    });
+  })();
+</script>
+
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<script>
+  (function () {
+    const textarea = document.querySelector('textarea[name="content_html"]');
+    if (!textarea || textarea.dataset.ckeditorInit === '1') return;
+    textarea.dataset.ckeditorInit = '1';
+
+    ClassicEditor.create(textarea, {
+      toolbar: [
+        'heading', '|', 'bold', 'italic', 'link', '|', 'bulletedList', 'numberedList', '|', 'insertImage', 'blockQuote', '|', 'undo', 'redo'
+      ],
+      heading: {
+        options: [
+          { model: 'paragraph', title: 'Absatz', class: 'ck-heading_paragraph' },
+          { model: 'heading2', view: 'h2', title: 'Überschrift 2', class: 'ck-heading_heading2' },
+          { model: 'heading3', view: 'h3', title: 'Überschrift 3', class: 'ck-heading_heading3' },
+          { model: 'heading4', view: 'h4', title: 'Überschrift 4', class: 'ck-heading_heading4' }
+        ]
+      },
+      image: {
+        toolbar: ['imageTextAlternative']
+      }
+    }).then((editor) => {
+      window.__blogEditor = editor;
+      const formEl = textarea.closest('form');
+      if (!formEl) return;
+      formEl.addEventListener('submit', () => {
+        textarea.value = editor.getData();
+      });
+    }).catch((error) => console.error('[BLOG] CKEditor init failed:', error));
+  })();
+</script>

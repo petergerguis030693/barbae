@@ -1,0 +1,49 @@
+<section class="section products-section">
+  <div class="section-head">
+    <h3><%= (typeof productsTitle !== 'undefined' && productsTitle) ? productsTitle : (query ? `Suchergebnisse für "${query}"` : 'Produkte') %></h3>
+    <span><%= featuredProducts.length %> Treffer</span>
+  </div>
+
+  <% if (!featuredProducts.length) { %>
+    <div class="empty-state">Keine Produkte gefunden. Versuche einen anderen Suchbegriff.</div>
+  <% } else { %>
+    <div class="product-grid">
+      <% featuredProducts.forEach((product) => { %>
+        <article
+          class="product-card"
+          data-product-id="<%= product.id %>"
+          data-product-title="<%= product.title %>"
+          data-product-price="<%= Number(product.price || 0).toFixed(2) %>"
+          data-product-image="<%= product.imageUrl || '' %>"
+          data-product-weight="<%= Number(product.weight_grams || 0) %>"
+        >
+          <div class="product-media">
+            <% if (product.imageUrl) { %>
+              <img src="<%= product.imageUrl %>" alt="<%= product.title %>" />
+            <% } else { %>
+              <div class="tile-fallback"></div>
+            <% } %>
+          </div>
+          <div class="product-content">
+            <small><%= product.category_name || 'Kategorie' %></small>
+            <h4><a href="<%= product.productUrl || '#' %>"><%= product.title %></a></h4>
+            <div class="product-row">
+              <strong><%= Number(product.price || 0).toFixed(2) %> EUR</strong>
+              <button
+                class="add-to-cart"
+                type="button"
+                data-product-id="<%= product.id %>"
+                data-product-title="<%= product.title %>"
+                data-product-price="<%= Number(product.price || 0).toFixed(2) %>"
+                data-product-image="<%= product.imageUrl || '' %>"
+                data-product-weight="<%= Number(product.weight_grams || 0) %>"
+              >
+                In den Warenkorb
+              </button>
+            </div>
+          </div>
+        </article>
+      <% }) %>
+    </div>
+  <% } %>
+</section>

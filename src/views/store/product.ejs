@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <%- include('./partials/head-seo', { title, seoMeta: (typeof seoMeta !== 'undefined' ? seoMeta : null) }) %>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/css/store.css" />
+  </head>
+  <body>
+    <%- include('./partials/header', { hideOnTop: false }) %>
+
+    <main class="section product-page">
+      <a class="product-back" href="<%= category ? category.url : '/' %>"><i class="bi bi-arrow-left"></i> Zurück</a>
+
+      <section class="product-layout">
+        <div class="product-gallery">
+          <div class="product-thumbs">
+            <% product.media.forEach((img, idx) => { %>
+              <button type="button" class="thumb-btn <%= idx === 0 ? 'active' : '' %>" data-image="<%= img %>">
+                <img src="<%= img %>" alt="<%= product.title %>" />
+              </button>
+            <% }) %>
+          </div>
+
+          <div class="product-main-image">
+            <% if (product.media.length) { %>
+              <img id="productMainImage" src="<%= product.media[0] %>" alt="<%= product.title %>" />
+            <% } else { %>
+              <div class="tile-fallback"></div>
+            <% } %>
+          </div>
+        </div>
+
+        <div class="product-content-col">
+          <h1><%= product.title %></h1>
+          <div class="price-line">
+            <strong id="productUnitPrice"><%= Number(product.price || 0).toFixed(2) %> EUR</strong>
+          </div>
+          <p class="tax-hint">inkl. MwSt. zzgl. Versandkosten</p>
+          <hr />
+          <p class="product-description"><%= product.description || 'Hochwertiges Produkt aus unserer exklusiven Kollektion.' %></p>
+
+          <% if (colorOptions.length) { %>
+            <h4>Farbe</h4>
+            <div class="option-row colors">
+              <% colorOptions.forEach((color, idx) => { %>
+                <button
+                  type="button"
+                  class="option-chip color-chip <%= idx === 0 ? 'active' : '' %>"
+                  data-option-color="<%= color %>"
+                  title="<%= color %>"
+                >
+                  <span><%= color %></span>
+                </button>
+              <% }) %>
+            </div>
+          <% } %>
+
+          <% if (sizeOptions.length) { %>
+            <h4>Größe</h4>
+            <div class="option-row sizes">
+              <% sizeOptions.forEach((size, idx) => { %>
+                <button type="button" class="option-chip size-chip <%= idx === 0 ? 'active' : '' %>" data-option-size="<%= size %>"><%= size %></button>
+              <% }) %>
+            </div>
+          <% } %>
+
+          <div class="product-usps">
+            <span><i class="bi bi-truck"></i> Gratis Versand</span>
+            <span><i class="bi bi-arrow-counterclockwise"></i> 30 Tage Rückgabe</span>
+            <span><i class="bi bi-shield-check"></i> Sichere Zahlung</span>
+          </div>
+        </div>
+
+        <aside class="product-buybox">
+          <% if (personalizationOptions.length) { %>
+            <h4><i class="bi bi-pencil"></i> Personalisierung</h4>
+            <div class="personalize-list" id="productPersonalize">
+              <button type="button" class="personalize-item personalize-none-btn active" id="personalizeNoneBtn" aria-pressed="true">
+                Keine
+              </button>
+              <% personalizationOptions.forEach((field, idx) => { %>
+                <% const fid = 'pf-' + String(field).replace(/[^a-zA-Z0-9_-]/g, '') + '-' + idx; %>
+                <div class="personalize-item personalize-item-input">
+                  <label class="visually-hidden" for="<%= fid %>"><%= field %></label>
+                  <input
+                    type="text"
+                    id="<%= fid %>"
+                    class="personalize-text-input"
+                    data-personalize-field="<%= field %>"
+                    placeholder="<%= field %>"
+                    maxlength="200"
+                    autocomplete="off"
+                  />
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+
+          <h4>Menge</h4>
+          <div class="qty-box">
+            <button type="button" id="qtyMinus">-</button>
+            <input id="qtyInput" type="number" min="1" value="1" />
+            <button type="button" id="qtyPlus">+</button>
+          </div>
+
+          <div class="buy-total">
+            <span>Gesamt</span>
+            <strong id="buyTotal"><%= Number(product.price || 0).toFixed(2) %> EUR</strong>
+          </div>
+
+          <button
+            class="btn-solid add-to-cart"
+            type="button"
+            id="productQuickBuy"
+            data-product-id="<%= product.id %>"
+            data-product-title="<%= product.title %>"
+            data-product-price="<%= Number(product.price || 0).toFixed(2) %>"
+            data-product-image="<%= product.imageUrl || '' %>"
+            data-product-weight="<%= Number(product.weight_grams || 0) %>"
+          >
+            Schnellkauf
+          </button>
+          <button
+            class="btn-outline add-to-cart"
+            type="button"
+            data-product-id="<%= product.id %>"
+            data-product-title="<%= product.title %>"
+            data-product-price="<%= Number(product.price || 0).toFixed(2) %>"
+            data-product-image="<%= product.imageUrl || '' %>"
+            data-product-weight="<%= Number(product.weight_grams || 0) %>"
+            id="addProductToCart"
+          >
+            <i class="bi bi-cart3"></i> Zum Warenkorb
+          </button>
+        </aside>
+      </section>
+      <%- include('./partials/seo-bottom', { seoBottom: (typeof seoBottom !== 'undefined' ? seoBottom : null) }) %>
+    </main>
+
+    <%- include('./partials/footer') %>
+
+    <script>
+      window.__STORE_DATA__ = {
+        searchItems: <%- JSON.stringify(searchItems).replace(/</g, '\\u003c') %>,
+        initialQuery: "",
+        productPage: {
+          unitPrice: <%= Number(product.price || 0).toFixed(2) %>,
+          colorStock: <%- JSON.stringify(colorStock).replace(/</g, '\\u003c') %>
+        }
+      };
+    </script>
+    <script src="/js/store.js"></script>
+  </body>
+</html>

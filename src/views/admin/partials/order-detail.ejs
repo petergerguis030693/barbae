@@ -1,0 +1,126 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a class="btn btn-outline-secondary" href="/admin/orders">Zurück zur Bestellliste</a>
+  <div class="d-flex gap-2">
+    <form method="post" action="/admin/orders/<%= data.order.id %>/status" class="d-flex gap-2">
+      <select class="form-select form-select-sm" name="status">
+        <% ['pending','paid','processing','shipped','completed','cancelled'].forEach((status) => { %>
+          <option value="<%= status %>" <%= data.order.status === status ? 'selected' : '' %>><%= status %></option>
+        <% }) %>
+      </select>
+      <button class="btn btn-sm btn-outline-primary">Status speichern</button>
+    </form>
+    <form method="post" action="/admin/invoices/<%= data.order.id %>/create">
+      <button class="btn btn-sm btn-dark">Rechnung erstellen</button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-muted small">Bestellnummer</div>
+        <div class="fw-semibold"><%= data.order.order_number %></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-muted small">Kunde</div>
+        <div class="fw-semibold"><%= data.order.first_name || '-' %> <%= data.order.last_name || '' %></div>
+        <div class="small text-muted"><%= data.order.company_name || '-' %></div>
+        <div class="small text-muted">UID: <%= data.order.uid_number || '-' %></div>
+        <div class="small text-muted"><%= data.order.email || '-' %></div>
+        <div class="small text-muted"><%= data.order.street || '-' %></div>
+        <div class="small text-muted"><%= data.order.postal_code || '-' %> <%= data.order.city || '' %></div>
+        <% if (data.order.customer_id) { %>
+          <a class="small" href="/admin/customers/<%= data.order.customer_id %>">Kundenprofil anzeigen</a>
+        <% } %>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-body">
+        <div class="text-muted small">Gesamtbetrag</div>
+        <div class="fw-semibold"><%= Number(data.order.total_amount).toFixed(2) %> <%= ['manual','stripe','klarna'].includes(String(data.order.currency || '').toLowerCase()) ? '€' : (String(data.order.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : data.order.currency) %></div>
+        <div class="small text-muted">Erhalt:
+          <%= String(data.order.fulfillment_method || 'delivery') === 'click_collect'
+            ? 'Click & Collect (Abholung)'
+            : String(data.order.fulfillment_method || 'delivery') === 'delivery_express'
+              ? 'Express Versand'
+              : 'Lieferung' %>
+        </div>
+        <% if (Number(data.order.discount_net_amount || 0) > 0) { %>
+          <div class="small text-muted">Rabattcode: <%= data.order.discount_code || '-' %></div>
+          <div class="small text-muted">Rabatt (netto): - <%= Number(data.order.discount_net_amount || 0).toFixed(2) %> <%= ['manual','stripe','klarna'].includes(String(data.order.currency || '').toLowerCase()) ? '€' : (String(data.order.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : data.order.currency) %></div>
+        <% } %>
+        <div class="small text-muted">Versand: <%= Number(data.order.shipping_amount || 0).toFixed(2) %> <%= ['manual','stripe','klarna'].includes(String(data.order.currency || '').toLowerCase()) ? '€' : (String(data.order.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : data.order.currency) %></div>
+        <div class="small text-muted"><%= new Date(data.order.created_at).toLocaleString('de-DE') %></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Bestellte Positionen</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Produkt</th>
+          <th class="text-end">Menge</th>
+          <th class="text-end">Einzelpreis</th>
+          <th class="text-end">Gesamt</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!data.items.length) { %>
+          <tr>
+            <td colspan="4" class="text-center py-4 text-muted">Keine Positionen gefunden.</td>
+          </tr>
+        <% } %>
+        <% data.items.forEach((item) => { %>
+          <tr>
+            <td>
+              <div><%= item.title || 'Produkt gelöscht' %></div>
+              <% if (item.option_summary) { %>
+                <div class="small text-muted"><%= item.option_summary %></div>
+              <% } %>
+            </td>
+            <td class="text-end"><%= item.quantity %></td>
+            <td class="text-end"><%= Number(item.unit_price).toFixed(2) %> <%= ['manual','stripe','klarna'].includes(String(data.order.currency || '').toLowerCase()) ? '€' : (String(data.order.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : data.order.currency) %></td>
+            <td class="text-end"><%= Number(item.total_price).toFixed(2) %> <%= ['manual','stripe','klarna'].includes(String(data.order.currency || '').toLowerCase()) ? '€' : (String(data.order.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : data.order.currency) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+      <tfoot>
+        <tr>
+          <th colspan="3" class="text-end">Erhalt</th>
+          <th class="text-end">
+            <%= String(data.order.fulfillment_method || 'delivery') === 'click_collect'
+              ? 'Click & Collect'
+              : String(data.order.fulfillment_method || 'delivery') === 'delivery_express'
+                ? 'Express Versand'
+                : 'Lieferung' %>
+          </th>
+        </tr>
+        <tr>
+          <th colspan="3" class="text-end">Versand</th>
+          <th class="text-end"><%= Number(data.order.shipping_amount || 0).toFixed(2) %> <%= ['manual','stripe','klarna'].includes(String(data.order.currency || '').toLowerCase()) ? '€' : (String(data.order.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : data.order.currency) %></th>
+        </tr>
+        <% if (Number(data.order.discount_net_amount || 0) > 0 || Number(data.order.discount_tax_amount || 0) > 0) { %>
+          <tr>
+            <th colspan="3" class="text-end">Rabatt <%= data.order.discount_code ? `(${data.order.discount_code})` : '' %></th>
+            <th class="text-end">- <%= Number((Number(data.order.discount_net_amount || 0) + Number(data.order.discount_tax_amount || 0))).toFixed(2) %> <%= ['manual','stripe','klarna'].includes(String(data.order.currency || '').toLowerCase()) ? '€' : (String(data.order.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : data.order.currency) %></th>
+          </tr>
+        <% } %>
+        <tr>
+          <th colspan="3" class="text-end">Bestellsumme</th>
+          <th class="text-end"><%= Number(data.order.total_amount).toFixed(2) %> <%= ['manual','stripe','klarna'].includes(String(data.order.currency || '').toLowerCase()) ? '€' : (String(data.order.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : data.order.currency) %></th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>

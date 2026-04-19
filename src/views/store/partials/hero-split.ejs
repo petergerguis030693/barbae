@@ -1,0 +1,30 @@
+<section class="hero-split">
+  <% heroCategories.forEach((category, idx) => { %>
+    <% const rawName = String(category.name || '').trim(); %>
+    <% const parts = rawName.split('&').map((x) => x.trim()).filter(Boolean); %>
+    <% const mainTitle = parts[0] || rawName; %>
+    <% const subTitle = parts.length > 1 ? `& ${parts.slice(1).join(' & ')}` : ''; %>
+    <article class="hero-card <%= idx === 0 ? 'hero-left' : 'hero-right' %>">
+      <% if (category.imageUrl) { %>
+        <img src="<%= category.imageUrl %>" alt="<%= category.name %>" />
+      <% } else { %>
+        <div class="hero-fallback"></div>
+      <% } %>
+      <div class="hero-overlay">
+        <p>ENTDECKE</p>
+        <h2><a href="<%= category.url %>"><%= mainTitle %></a></h2>
+        <% if (subTitle) { %>
+          <h3><a href="<%= category.url %>"><%= subTitle %></a></h3>
+        <% } %>
+        <span class="hero-divider"></span>
+        <% if (category.subcategories.length) { %>
+          <div class="hero-tags">
+            <% category.subcategories.forEach((item) => { %>
+              <span><a href="<%= item.url %>"><%= item.name %></a></span>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </article>
+  <% }) %>
+</section>

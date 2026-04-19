@@ -1,0 +1,50 @@
+﻿<div class="card mb-3">
+  <div class="card-header">Neues Produkt</div>
+  <div class="card-body">
+    <form method="post" action="/admin/products/create" enctype="multipart/form-data" class="row g-2">
+      <div class="col-md-4"><input class="form-control" name="title" placeholder="Titel" required /></div>
+      <div class="col-md-2"><input class="form-control" name="sku" placeholder="SKU" /></div>
+      <div class="col-md-2"><input class="form-control" type="number" step="0.01" name="price" placeholder="Preis" required /></div>
+      <div class="col-md-2"><input class="form-control" type="number" name="stock" placeholder="Stock" required /></div>
+      <div class="col-md-2">
+        <select class="form-select" name="category_id">
+          <option value="">Kategorie</option>
+          <% data.categories.forEach((cat) => { %>
+            <option value="<%= cat.id %>"><%= cat.name %></option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-12"><textarea class="form-control" name="description" placeholder="Beschreibung"></textarea></div>
+      <div class="col-md-6"><label class="form-label">Titelbild</label><input class="form-control" type="file" name="featured_image" accept="image/*" /></div>
+      <div class="col-md-6"><label class="form-label">Galerie</label><input class="form-control" type="file" name="gallery" multiple accept="image/*" /></div>
+      <div class="col-12 d-grid"><button class="btn btn-dark">Produkt anlegen</button></div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>ID</th><th>Titel</th><th>SKU</th><th>Preis</th><th>Stock</th><th>Kategorie</th><th>Status</th><th></th></tr></thead>
+      <tbody>
+        <% data.products.forEach((product) => { %>
+          <tr>
+            <td><%= product.id %></td>
+            <td><%= product.title %></td>
+            <td><%= product.sku || '-' %></td>
+            <td><%= Number(product.price).toFixed(2) %></td>
+            <td><%= product.stock %></td>
+            <td><%= product.category_name || '-' %></td>
+            <td><span class="badge <%= product.is_active ? 'text-bg-success' : 'text-bg-secondary' %>"><%= product.is_active ? 'aktiv' : 'inaktiv' %></span></td>
+            <td>
+              <form method="post" action="/admin/products/<%= product.id %>/delete" onsubmit="return confirm('Produkt löschen?')">
+                <button class="btn btn-sm btn-outline-danger">Löschen</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+

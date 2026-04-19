@@ -1,0 +1,35 @@
+<% if (data.flash) { %>
+  <div class="alert alert-<%= data.flash.type %> mb-3"><%= data.flash.text %></div>
+<% } %>
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Name</th><th>Firma</th><th>E-Mail</th><th>Telefon</th><th>PLZ / Ort</th><th>Bestellungen</th><th>Umsatz</th><th>Registriert</th><th>Aktion</th></tr></thead>
+      <tbody>
+        <% data.customers.forEach((customer) => { %>
+          <tr>
+            <td><%= customer.first_name %> <%= customer.last_name %></td>
+            <td>
+              <div><%= customer.company_name || '-' %></div>
+              <div class="small text-muted">UID: <%= customer.uid_number || '-' %></div>
+            </td>
+            <td><%= customer.email %></td>
+            <td><%= customer.phone || '-' %></td>
+            <td><%= customer.postal_code || '-' %> <%= customer.city || '' %></td>
+            <td><%= customer.order_count %></td>
+            <td><%= Number(customer.lifetime_value).toFixed(2) %> EUR</td>
+            <td><%= new Date(customer.created_at).toLocaleDateString('de-DE') %></td>
+            <td>
+              <div class="d-flex gap-1">
+                <a class="btn btn-sm btn-outline-secondary" href="/admin/customers/<%= customer.id %>">Anzeigen</a>
+                <form method="post" action="/admin/customers/<%= customer.id %>/delete" onsubmit="return confirm('Kunde wirklich löschen? Nur möglich ohne Bestellungen.');">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

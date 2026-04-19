@@ -1,0 +1,46 @@
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Order</th><th>Kunde</th><th>Artikel</th><th>Erhalt</th><th>Status</th><th>Summe</th><th>Datum</th><th>Aktionen</th></tr></thead>
+      <tbody>
+        <% data.orders.forEach((order) => { %>
+          <tr>
+            <td><%= order.order_number %></td>
+            <td>
+              <% if (order.customer_id) { %>
+                <a href="/admin/customers/<%= order.customer_id %>"><%= order.customer_name || '-' %></a>
+              <% } else { %>
+                <%= order.customer_name || '-' %>
+              <% } %>
+            </td>
+            <td><%= order.item_count %> Positionen / <%= order.total_quantity %> Stk.</td>
+            <td>
+              <%= String(order.fulfillment_method || 'delivery') === 'click_collect'
+                ? 'Click & Collect'
+                : String(order.fulfillment_method || 'delivery') === 'delivery_express'
+                  ? 'Express Versand'
+                  : 'Lieferung' %>
+            </td>
+            <td><span class="badge text-bg-secondary"><%= order.status %></span></td>
+            <td><%= Number(order.total_amount).toFixed(2) %> <%= ['manual','stripe','klarna'].includes(String(order.currency || '').toLowerCase()) ? '€' : (String(order.currency || 'EUR').toUpperCase() === 'EUR' ? '€' : order.currency) %></td>
+            <td><%= new Date(order.created_at).toLocaleString('de-DE') %></td>
+            <td class="d-flex gap-2">
+              <a class="btn btn-sm btn-outline-secondary" href="/admin/orders/<%= order.id %>">Anzeigen</a>
+              <form method="post" action="/admin/orders/<%= order.id %>/status" class="d-flex gap-2">
+                <select class="form-select form-select-sm" name="status">
+                  <% ['pending','paid','processing','shipped','completed','cancelled'].forEach((status) => { %>
+                    <option value="<%= status %>" <%= order.status === status ? 'selected' : '' %>><%= status %></option>
+                  <% }) %>
+                </select>
+                <button class="btn btn-sm btn-outline-primary">Update</button>
+              </form>
+              <form method="post" action="/admin/invoices/<%= order.id %>/create">
+                <button class="btn btn-sm btn-outline-dark">Rechnung</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,366 @@
+﻿<%- include('../partials/header') %>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/devicons/devicon@latest/devicon.min.css">
+
+
+  <section class="hero">
+    <video autoplay muted loop playsinline class="hero-video">
+      <source src="/images/hero.mp4" type="video/mp4">
+      <img src="/images/hero-fallback.jpg" alt="ITWELT24 – Digitale Zukunft" />
+    </video>
+
+    <!-- Overlay (dunkler Filter für besseren Kontrast) -->
+    <div class="overlay"></div>
+
+    <!-- Hero-Content -->
+    <div class="hero-content">
+      <p>ITWELT24 – Full-Service-Agentur für IT, Software, Apps & Webentwicklung</p>
+      <a href="#kontakt" class="btn">Projekt starten</a>
+    </div>
+
+  </section>
+
+<div class="leistungen-slider-container">
+  <div class="slide">
+
+    <div class="item" style="background-image: url('/images/it&network.jpg');">
+      <div class="content">
+        <div class="name">IT & Network</div>
+        <div class="des">Professionelle IT-Infrastruktur, sichere Netzwerke & Unternehmenssupport.</div>
+      </div>
+    </div>
+
+    <div class="item" style="background-image: url('/images/cloud&hosting.jpg');">
+      <div class="content">
+        <div class="name">Cloud & Hosting</div>
+        <div class="des">Private Cloud, Serververwaltung & Hochverfügbarkeit auf Enterprise-Niveau.</div>
+      </div>
+    </div>
+
+    <div class="item" style="background-image: url('/images/ki.jpg');">
+      <div class="content">
+        <div class="name">Künstliche Intelligenz</div>
+        <div class="des">Automatisierung, Chatbots & intelligente Prozessoptimierung.</div>
+      </div>
+    </div>
+
+    <div class="item" style="background-image: url('/images/brands.png');">
+      <div class="content">
+        <div class="name">Branding & Design</div>
+        <div class="des">Wir gestalten Marken, die Vertrauen schaffen und modern wirken.</div>
+      </div>
+    </div>
+
+    <div class="item" style="background-image: url('/images/software-entwicklung.jpg');">
+      <div class="content">
+        <div class="name">Software Entwicklung</div>
+        <div class="des">Individuelle Softwarelösungen abgestimmt auf echte Geschäftsprozesse.</div>
+      </div>
+    </div>
+
+    <div class="item" style="background-image: url('/images/Webentwicklung.jpg');">
+      <div class="content">
+        <div class="name">Webentwicklung</div>
+        <div class="des">Moderne Web-Apps & Websites mit Fokus Performance & Design.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="slider-buttons">
+    <button class="prev">&#9665;</button>
+    <button class="next">&#9655;</button>
+  </div>
+</div>
+
+  <section id="leistungen" class="leistungen">
+    <div class="container-leistungen">
+      <h2 class="text-left">Unsere Leistungen</h2>
+
+      <div class="leistungen-grid">
+
+        <article class="leistung fade-in">
+          <!-- Monitor / IT Support -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="3" width="20" height="14" rx="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          <h3>IT Support</h3>
+          <p>Professioneller 1st & 2nd Level Support – schnell, zuverlässig und effizient.</p>
+        </article>
+
+        <article class="leistung fade-in">
+          <!-- Server -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="6" rx="2" />
+            <rect x="2" y="14" width="20" height="6" rx="2" />
+            <line x1="6" y1="8" x2="6" y2="8" />
+            <line x1="6" y1="18" x2="6" y2="18" />
+          </svg>
+          <h3>Serverkonfiguration</h3>
+          <p>Exchange-, File- und AD-Konfiguration maßgeschneidert für Unternehmen.</p>
+        </article>
+
+        <article class="leistung fade-in">
+          <!-- Shield Backup -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2l8 4v6c0 5.25-3.5 9.75-8 10-4.5-.25-8-4.75-8-10V6l8-4z" />
+          </svg>
+          <h3>Backup Lösungen</h3>
+          <p>Veeam-zertifizierte, sichere und skalierbare Datensicherungsstrategien.</p>
+        </article>
+
+        <article class="leistung fade-in">
+          <!-- Code -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="16 18 22 12 16 6" />
+            <polyline points="8 6 2 12 8 18" />
+          </svg>
+          <h3>Softwareentwicklung</h3>
+          <p>Individuelle Web- & KI-Software für echte Prozessautomatisierung.</p>
+        </article>
+
+        <article class="leistung fade-in">
+          <!-- Cloud -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17.5 19a4.5 4.5 0 0 0 0-9 5.5 5.5 0 0 0-11 1A4 4 0 0 0 7 19h10.5z" />
+          </svg>
+          <h3>Cloud & Infrastruktur</h3>
+          <p>Skalierbare Server, sichere Netzwerke & moderne Cloud-Architektur.</p>
+        </article>
+
+        <article class="leistung fade-in">
+          <!-- Layout Web -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2" />
+            <line x1="3" y1="9" x2="21" y2="9" />
+            <line x1="9" y1="9" x2="9" y2="21" />
+          </svg>
+          <h3>Webdesign & UX</h3>
+          <p>Modernes Design, klare Strukturen & Conversion-starke Nutzerführung.</p>
+        </article>
+
+        <article class="leistung fade-in">
+          <!-- Spark AI -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2m0 16v2m10-10h-2M4 12H2m15.5-7.5l-1.5 1.5M7 17l-1.5 1.5M7 5.5 5.5 7M17 17l1.5 1.5" />
+          </svg>
+          <h3>Künstliche Intelligenz</h3>
+          <p>Chatbots, Automationen, Machine Learning – smart & effizient.</p>
+        </article>
+
+        <article class="leistung fade-in">
+          <!-- SEO Search -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="7" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <h3>SEO Optimierung</h3>
+          <p>Mehr Sichtbarkeit, organisches Wachstum & Top-Rankings.</p>
+        </article>
+
+        <article class="leistung fade-in">
+          <!-- Message / Marketing -->
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          <h3>Social Media Marketing</h3>
+          <p>Branding & Performance-Kampagnen für mehr Reichweite & Leads.</p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+
+  <section id="ueber-uns" class="ueber-uns">
+    <div class="container-ueberuns">
+      <div class="ueberuns-text">
+        <h2>Über uns</h2>
+        <p>
+          Wir sind <strong>ITWELT24</strong> – deine Full-Service-Agentur aus Graz.
+          Unser Team verbindet Technologie mit Kreativität, um digitale Erlebnisse zu schaffen,
+          die Menschen begeistern und Unternehmen wachsen lassen.
+        </p>
+        <p>
+          Ob Webdesign, KI-Integration, Marketing oder Softwareentwicklung –
+          wir liefern durchdachte Strategien und performante Lösungen, die funktionieren.
+        </p>
+        <a href="#kontakt" class="btn">Kontaktiere uns</a>
+      </div>
+      <div class="ueberuns-bild">
+        <img src="/images/office-team.jpg" alt="Unser Team">
+      </div>
+    </div>
+  </section>
+
+
+  <section id="technologien" class="technologien">
+    <div class="container-tech">
+      <h2 class="section-title">Unsere Technologien</h2>
+      <p class="section-subtitle">
+        Wir entwickeln, sichern und betreiben digitale Systeme mit modernsten Frameworks, Cloud-Infrastrukturen und
+        KI-Automatisierung – für maximale Performance, Stabilität und Zukunftssicherheit.
+      </p>
+
+      <div class="tech-logos-grid">
+
+        <!-- Web & Backend -->
+        <div class="tech-logo"><i class="devicon-nodejs-plain colored"></i>
+          <h4>Node.js</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-express-original colored"></i>
+          <h4>Express</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-javascript-plain colored"></i>
+          <h4>JavaScript</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-react-original colored"></i>
+          <h4>React</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-react-original colored"></i>
+          <h4>React Native</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-python-plain colored"></i>
+          <h4>Python</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-django-plain colored"></i>
+          <h4>Django</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-java-plain colored"></i>
+          <h4>Java</h4>
+        </div>
+        <div class="tech-logo"><img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/spring/spring-original.svg"
+            alt="Spring Boot Logo" class="n8n-logo">
+          <h4>Spring Boot</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-php-plain colored"></i>
+          <h4>PHP</h4>
+        </div>
+
+        <!-- Datenbanken -->
+        <div class="tech-logo"><i class="devicon-mysql-plain colored"></i>
+          <h4>MySQL</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-sqlite-plain colored"></i>
+          <h4>SQL</h4>
+        </div>
+        <div class="tech-logo"><i class="devicon-wordpress-plain colored"></i>
+          <h4>WordPress</h4>
+        </div>
+
+        <!-- Automatisierung & KI -->
+        <div class="tech-logo"><img src="https://n8n.io/favicon-32x32.png" alt="n8n Logo" class="n8n-logo">
+          <h4>n8n</h4>
+        </div>
+
+        <!-- Infrastruktur & Security -->
+        <div class="tech-logo"><img src="https://cdn-icons-png.flaticon.com/512/1183/1183681.png" alt="Firewall"
+            class="n8n-logo">
+          <h4>Firewall</h4>
+        </div>
+        <div class="tech-logo"><img src="https://cdn-icons-png.flaticon.com/512/4072/4072532.png" alt="Hosting"
+            class="n8n-logo">
+          <h4>Hosting</h4>
+        </div>
+        <div class="tech-logo"><img src="https://cdn-icons-png.flaticon.com/512/4144/4144720.png" alt="Cloud"
+            class="n8n-logo">
+          <h4>Cloud</h4>
+        </div>
+        <div class="tech-logo"><img src="https://cdn-icons-png.flaticon.com/512/732/732221.png" alt="Microsoft"
+            class="n8n-logo">
+          <h4>Microsoft</h4>
+        </div>
+        <div class="tech-logo"><img src="https://cdn-icons-png.flaticon.com/512/5968/5968940.png" alt="Cisco"
+            class="n8n-logo">
+          <h4>Cisco</h4>
+        </div>
+        <div class="tech-logo"><img src="https://cdn-icons-png.flaticon.com/512/554/554857.png" alt="IT Netzwerk"
+            class="n8n-logo">
+          <h4>IT & Support</h4>
+        </div>
+
+        <div class="tech-logo">
+          <img src="/images/Veeam-logo.png" alt="Veeam Logo" class="tech-logo-img" style="width: 90px; height: auto">
+          <h4>Veeam</h4>
+        </div>
+
+
+      </div>
+    </div>
+  </section>
+
+  <section id="mehrwert" class="mehrwert">
+    <div class="container-mehrwert">
+      <h2 class="section-title">Unser Mehrwert für dein Unternehmen</h2>
+
+      <div class="mehrwert-grid">
+        <div class="mw-item">
+          <i class="fas fa-chart-line icon"></i>
+          <h3>Messbare Ergebnisse</h3>
+          <p>Wir liefern Lösungen, die Umsatz, Effizienz und Markenbekanntheit steigern – nicht nur schöne Designs.</p>
+        </div>
+
+        <div class="mw-item">
+          <i class="fas fa-brain icon"></i>
+          <h3>Strategische Intelligenz</h3>
+          <p>Unsere KI-gestützten Systeme treffen datenbasierte Entscheidungen – schnell, präzise und skalierbar.</p>
+        </div>
+
+        <div class="mw-item">
+          <i class="fas fa-users icon"></i>
+          <h3>Partnerschaftlich</h3>
+          <p>Wir begleiten dich langfristig – von der Idee bis zur Umsetzung und Automatisierung deiner
+            Geschäftsprozesse.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <section id="projekte" class="projekte">
+    <div class="container-projekte">
+      <h2 class="section-title">Unsere Projekte</h2>
+      <p class="section-subtitle">Ein Auszug unserer Arbeit – Qualität vor Quantität.</p>
+
+      <div class="projekte-grid">
+        <% const projekte=[ { img: "/images/projekt1.jpg" , title: "FinTech Plattform" ,
+          desc: "KI-gestützte Finanzanalyse & Automatisierung" }, { img: "/images/projekt2.jpg" ,
+          title: "SmartCity Dashboard" , desc: "Echtzeitdaten & städtische Vernetzung" }, { img: "/images/projekt3.jpg"
+          , title: "Healthcare KI" , desc: "Automatische Diagnostik & Patientenverwaltung" }, {
+          img: "/images/projekt4.jpg" , title: "E-Commerce Automatisierung" ,
+          desc: "Shop-Management & Prozessoptimierung" }, { img: "/images/projekt5.jpg" , title: "CRM System" ,
+          desc: "Kundendatenanalyse & Automatisierte Workflows" } ]; %>
+
+          <% projekte.forEach(p=> { %>
+            <div class="projekt-box fade-in">
+              <img src="<%= p.img %>" alt="<%= p.title %>">
+              <div class="projekt-info">
+                <h3>
+                  <%= p.title %>
+                </h3>
+                <p>
+                  <%= p.desc %>
+                </p>
+              </div>
+            </div>
+            <% }); %>
+      </div>
+    </div>
+  </section>
+
+
+
+  <%- include('../partials/footer') %>
+
+
+    <script src="js/script.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+      integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+      crossorigin="anonymous"></script>
+
+    </body>
+
+    </html>

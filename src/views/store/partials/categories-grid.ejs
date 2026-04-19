@@ -1,0 +1,17 @@
+<section class="section categories-section">
+  <div class="section-head">
+    <h3>Hauptkategorien</h3>
+  </div>
+  <div class="category-grid">
+    <% categoriesWithImage.forEach((category) => { %>
+      <a class="category-tile" href="<%= category.url %>">
+        <% if (category.imageUrl) { %>
+          <img src="<%= category.imageUrl %>" alt="<%= category.name %>" />
+        <% } else { %>
+          <div class="tile-fallback"></div>
+        <% } %>
+        <span><%= category.name %></span>
+      </a>
+    <% }) %>
+  </div>
+</section>

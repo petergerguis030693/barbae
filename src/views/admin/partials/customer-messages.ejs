@@ -1,0 +1,120 @@
+<% const flash = data.flash || null; %>
+<% const customers = data.customers || []; %>
+<% const recentMessages = data.recentMessages || []; %>
+
+<% if (flash) { %>
+  <div class="alert alert-<%= flash.type %>"><%= flash.text %></div>
+<% } %>
+
+<div class="row g-3">
+  <div class="col-12 col-xl-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Einzelnachricht an Kunden</h2>
+        <form method="post" action="/admin/customer-messages/send-single" class="d-grid gap-3">
+          <div>
+            <label class="form-label">Kunde</label>
+            <select name="customer_id" class="form-select" required>
+              <option value="">Bitte wählen ...</option>
+              <% customers.forEach((c) => { %>
+                <option value="<%= c.id %>">
+                  #<%= c.id %> - <%= [c.first_name, c.last_name].filter(Boolean).join(' ') || '-' %> (<%= c.email || 'keine E-Mail' %>)
+                </option>
+              <% }) %>
+            </select>
+          </div>
+          <div>
+            <label class="form-label">Betreff</label>
+            <input type="text" name="subject" class="form-control" required />
+          </div>
+          <div>
+            <label class="form-label">Nachricht</label>
+            <textarea name="body_text" class="form-control" rows="6" required></textarea>
+            <div class="form-text">Wird im Kundenkonto angezeigt. Absätze sind möglich.</div>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="send_email" value="1" id="sendSingleEmail" checked />
+            <label class="form-check-label" for="sendSingleEmail">Zusätzlich per E-Mail senden</label>
+          </div>
+          <button type="submit" class="btn btn-primary">Nachricht senden</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-xl-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Newsletter an Opt-in Kunden</h2>
+        <form method="post" action="/admin/customer-messages/send-newsletter" class="d-grid gap-3">
+          <div class="alert alert-light border mb-0">
+            Empfänger: <strong><%= customers.filter((c) => Number(c.newsletter_opt_in) === 1).length %></strong> Kunden mit Newsletter-Einwilligung
+          </div>
+          <div>
+            <label class="form-label">Betreff</label>
+            <input type="text" name="subject" class="form-control" required />
+          </div>
+          <div>
+            <label class="form-label">Newsletter Inhalt</label>
+            <textarea name="body_text" class="form-control" rows="8" required></textarea>
+            <div class="form-text">Wird im Kundenkonto angezeigt und optional per E-Mail verschickt.</div>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="send_email" value="1" id="sendNewsletterEmail" checked />
+            <label class="form-check-label" for="sendNewsletterEmail">Per E-Mail senden</label>
+          </div>
+          <button type="submit" class="btn btn-warning">Newsletter senden</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5 mb-3">Verlauf (neueste Nachrichten)</h2>
+        <div class="table-responsive">
+          <table class="table table-sm align-middle">
+            <thead>
+              <tr>
+                <th>Zeit</th>
+                <th>Typ</th>
+                <th>Kunde</th>
+                <th>Betreff</th>
+                <th>E-Mail</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (!recentMessages.length) { %>
+                <tr><td colspan="6" class="text-muted">Noch keine Nachrichten vorhanden.</td></tr>
+              <% } %>
+              <% recentMessages.forEach((msg) => { %>
+                <tr>
+                  <td><%= new Date(msg.created_at).toLocaleString('de-AT') %></td>
+                  <td><span class="badge text-bg-light border"><%= msg.kind %></span></td>
+                  <td>
+                    #<%= msg.customer_id %>
+                    <div class="small text-muted"><%= [msg.first_name, msg.last_name].filter(Boolean).join(' ') || '-' %></div>
+                  </td>
+                  <td><%= msg.subject %></td>
+                  <td><%= msg.email || '-' %></td>
+                  <td>
+                    <% if (Number(msg.is_read) === 1) { %>
+                      <span class="badge text-bg-success">gelesen</span>
+                    <% } else { %>
+                      <span class="badge text-bg-secondary">ungelesen</span>
+                    <% } %>
+                    <% if (Number(msg.sent_via_email) === 1) { %>
+                      <span class="badge text-bg-info">E-Mail</span>
+                    <% } %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

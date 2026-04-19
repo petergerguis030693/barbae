@@ -1,0 +1,41 @@
+<div class="d-flex justify-content-end mb-3">
+  <a class="btn btn-dark" href="/admin/seo/new">SEO Seite hinzufügen</a>
+</div>
+
+<div class="card">
+  <div class="card-header">SEO Seiten</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Seite</th>
+          <th>Slug</th>
+          <th>Meta Titel</th>
+          <th>Meta Beschreibung</th>
+          <th class="text-end">Aktion</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!data.pages.length) { %>
+          <tr><td colspan="5" class="text-center text-muted py-4">Keine SEO Seiten vorhanden.</td></tr>
+        <% } %>
+        <% data.pages.forEach((page) => { %>
+          <tr>
+            <td><strong><%= page.title %></strong></td>
+            <td><code>/<%= page.slug %></code></td>
+            <td><%= page.meta_title || '-' %></td>
+            <td><%= page.meta_description || '-' %></td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-2">
+                <a class="btn btn-sm btn-outline-primary" href="/admin/seo/<%= page.id %>/edit">Bearbeiten</a>
+                <form method="post" action="/admin/seo/<%= page.id %>/delete" onsubmit="return confirm('SEO Seite löschen?')">
+                  <button class="btn btn-sm btn-outline-danger">Löschen</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

@@ -1,0 +1,107 @@
+﻿<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header">Allgemeine Settings</div>
+      <div class="card-body">
+        <form method="post" action="/admin/settings" class="d-grid gap-3">
+          <div class="row g-2">
+            <% if (data.settings.length === 0) { %>
+              <div class="col-12 text-muted">Noch keine allgemeinen Settings vorhanden.</div>
+            <% } %>
+            <% data.settings.forEach((setting) => { %>
+              <div class="col-md-6">
+                <label class="form-label"><%= setting.key %></label>
+                <input class="form-control" name="<%= setting.key %>" value="<%= setting.value %>" />
+              </div>
+            <% }) %>
+          </div>
+          <button class="btn btn-dark" type="submit">Settings speichern</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">Setting hinzufügen</div>
+      <div class="card-body">
+        <form method="post" action="/admin/settings/create" class="row g-2">
+          <div class="col-md-5"><input class="form-control" name="key" placeholder="key_name" required /></div>
+          <div class="col-md-5"><input class="form-control" name="value" placeholder="Wert" /></div>
+          <div class="col-md-2 d-grid"><button class="btn btn-outline-primary">Hinzufügen</button></div>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">Settings löschen</div>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle mb-0">
+          <thead><tr><th>Key</th><th>Wert</th><th class="text-end">Aktion</th></tr></thead>
+          <tbody>
+            <% data.settings.forEach((setting) => { %>
+              <tr>
+                <td><code><%= setting.key %></code></td>
+                <td><%= setting.value || '-' %></td>
+                <td class="text-end">
+                  <form method="post" action="/admin/settings/<%= setting.id %>/delete" onsubmit="return confirm('Setting löschen?')">
+                    <button class="btn btn-sm btn-outline-danger">Löschen</button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">Stripe & Klarna API Keys</div>
+      <div class="card-body">
+        <form method="post" action="/admin/settings/payment" class="d-grid gap-3">
+          <div>
+            <label class="form-label">Stripe Public Key</label>
+            <input class="form-control" name="stripe_public_key" value="<%= data.paymentSettings.stripe_public_key || '' %>" placeholder="pk_live_..." />
+          </div>
+          <div>
+            <label class="form-label">Stripe Secret Key</label>
+            <input class="form-control" name="stripe_secret_key" value="<%= data.paymentSettings.stripe_secret_key || '' %>" placeholder="sk_live_..." />
+          </div>
+          <div>
+            <label class="form-label">Stripe Webhook Secret</label>
+            <input class="form-control" name="stripe_webhook_secret" value="<%= data.paymentSettings.stripe_webhook_secret || '' %>" placeholder="whsec_..." />
+          </div>
+          <hr class="my-1" />
+          <div>
+            <label class="form-label">Klarna Username</label>
+            <input class="form-control" name="klarna_username" value="<%= data.paymentSettings.klarna_username || '' %>" />
+          </div>
+          <div>
+            <label class="form-label">Klarna Password</label>
+            <input class="form-control" name="klarna_password" value="<%= data.paymentSettings.klarna_password || '' %>" />
+          </div>
+          <div>
+            <label class="form-label">Klarna API Key</label>
+            <input class="form-control" name="klarna_api_key" value="<%= data.paymentSettings.klarna_api_key || '' %>" />
+          </div>
+          <button class="btn btn-dark" type="submit">Payment Keys speichern</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-3">
+      <div class="card-header">Versand Einstellungen</div>
+      <div class="card-body">
+        <form method="post" action="/admin/settings/shipping" class="d-grid gap-3">
+          <div>
+            <label class="form-label">Express Versand Preis (EUR brutto)</label>
+            <input class="form-control" name="express_shipping_price" value="<%= data.shippingSettings.express_shipping_price || '0.00' %>" placeholder="z. B. 14.90" />
+            <div class="form-text">Wird im Checkout als Express Versand verwendet.</div>
+          </div>
+          <button class="btn btn-dark" type="submit">Versand speichern</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+

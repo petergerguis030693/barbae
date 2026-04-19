@@ -1,0 +1,204 @@
+<script>
+  (function () {
+    const form = document.querySelector('[data-seo-form]');
+    if (!form || form.dataset.seoAutofillBound === '1') return;
+    form.dataset.seoAutofillBound = '1';
+
+    const $ = (name) => form.querySelector(`[name="${name}"]`);
+    const fields = {
+      title: $('title'),
+      slug: $('slug'),
+      meta_title: $('meta_title'),
+      meta_description: $('meta_description'),
+      seo_text: $('seo_text'),
+      focus_keyword: $('focus_keyword'),
+      og_title: $('og_title'),
+      og_description: $('og_description'),
+      canonical_url: $('canonical_url'),
+      robots: $('robots'),
+      json_ld: $('json_ld')
+    };
+
+    function cleanSlug(value) {
+      return String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/^\/+|\/+$/g, '');
+    }
+
+    function titleCaseWords(value) {
+      return String(value || '')
+        .split(/[-_\s]+/)
+        .filter(Boolean)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
+    }
+
+    function makeParagraphs(lines) {
+      return lines.map((line) => `<p>${line}</p>`).join('\n');
+    }
+
+    function siteBaseUrl() {
+      const origin = window.location.origin || '';
+      if (/localhost|127\.0\.0\.1/i.test(origin)) return origin;
+      return 'https://www.barbae.at';
+    }
+
+    function defaultJsonLdHome() {
+      return JSON.stringify(
+        {
+          '@context': 'https://schema.org',
+          '@graph': [
+            {
+              '@type': 'Organization',
+              '@id': 'https://www.barbae.at/#organization',
+              name: 'BarBae',
+              url: 'https://www.barbae.at/',
+              logo: {
+                '@type': 'ImageObject',
+                url: 'https://www.barbae.at/favicon.svg'
+              }
+            },
+            {
+              '@type': 'WebSite',
+              '@id': 'https://www.barbae.at/#website',
+              url: 'https://www.barbae.at/',
+              name: 'BarBae',
+              publisher: {
+                '@id': 'https://www.barbae.at/#organization'
+              }
+            }
+          ]
+        },
+        null,
+        2
+      );
+    }
+
+    function pagePreset(rawSlug, currentTitle) {
+      const slug = cleanSlug(rawSlug);
+      const base = siteBaseUrl();
+
+      const presets = {
+        'store-home': {
+          title: 'Store Startseite',
+          meta_title: 'BarBae Shop | Beauty Produkte, Styles & exklusive Sets online',
+          meta_description:
+            'Entdecke bei BarBae hochwertige Beauty Produkte, stilvolle Highlights und exklusive Sets. Jetzt online shoppen und neue Favoriten für deinen Look finden.',
+          seo_text: makeParagraphs([
+            'BarBae steht für stilvolle Beauty-Produkte, kuratierte Highlights und ein hochwertiges Einkaufserlebnis. In unserem Online-Shop entdeckst du ausgewählte Produkte aus den Bereichen Beauty, Styles und exklusive Sets, die Ästhetik, Qualität und Alltagstauglichkeit verbinden.',
+            'Wir legen Wert auf eine klare Auswahl, moderne Looks und Produkte, die deinen persönlichen Stil unterstreichen. Ob du neue Favoriten entdecken oder gezielt nach besonderen Pflege- und Styling-Produkten suchen möchtest: Bei BarBae findest du eine sorgfältig zusammengestellte Auswahl für verschiedene Anlässe.',
+            'Bestelle bequem online und entdecke regelmäßig neue Bestseller, saisonale Highlights und exklusive Kollektionen.'
+          ]),
+          focus_keyword: 'Beauty Shop',
+          og_title: 'BarBae | Beauty, Styles & exklusive Highlights',
+          og_description:
+            'Kuratierte Beauty-Produkte, stilvolle Essentials und exklusive Sets. Entdecke jetzt den BarBae Online Shop.',
+          canonical_url: `${base}/`,
+          robots: 'index,follow',
+          json_ld: defaultJsonLdHome()
+        },
+        'store-checkout': {
+          title: 'Checkout',
+          meta_title: 'Checkout | BarBae',
+          meta_description:
+            'Sicherer Checkout bei BarBae. Bestellungen bequem abschließen, Kundendaten verwalten und Zahlungsart auswählen.',
+          seo_text: makeParagraphs([
+            'Im BarBae Checkout kannst du deine Bestellung sicher und bequem abschließen.',
+            'Prüfe deine ausgewählten Produkte, hinterlege deine Lieferdaten und wähle die passende Zahlungsart. Unser Checkout ist auf eine schnelle und übersichtliche Bestellabwicklung ausgelegt.'
+          ]),
+          focus_keyword: 'Checkout',
+          canonical_url: `${base}/checkout`,
+          robots: 'noindex,follow'
+        },
+        'store-account': {
+          title: 'Kundenkonto',
+          meta_title: 'Kundenkonto | BarBae',
+          meta_description:
+            'Verwalte dein BarBae Kundenkonto: Bestellungen, Adressen, Nachrichten und persönliche Daten.',
+          seo_text: makeParagraphs([
+            'Im BarBae Kundenkonto verwaltest du deine Bestellungen, Adressen und Profildaten zentral an einem Ort.',
+            'Zusätzlich findest du hier wichtige Nachrichten, Newsletter-Informationen und deine persönlichen Konto-Einstellungen.'
+          ]),
+          focus_keyword: 'Kundenkonto',
+          canonical_url: `${base}/account`,
+          robots: 'noindex,follow'
+        },
+        'store-account-forgot-password': {
+          title: 'Passwort vergessen',
+          meta_title: 'Passwort vergessen | BarBae',
+          meta_description: 'Passwort für dein BarBae Kundenkonto zurücksetzen.',
+          seo_text: makeParagraphs([
+            'Wenn du dein Passwort vergessen hast, kannst du hier einen sicheren Reset-Link für dein BarBae Kundenkonto anfordern.',
+            'Aus Sicherheitsgründen ist der Link zeitlich begrenzt.'
+          ]),
+          focus_keyword: 'Passwort zurücksetzen',
+          canonical_url: `${base}/account/forgot-password`,
+          robots: 'noindex,nofollow'
+        },
+        'store-account-reset-password': {
+          title: 'Passwort Reset',
+          meta_title: 'Neues Passwort setzen | BarBae',
+          meta_description: 'Setze ein neues Passwort für dein BarBae Kundenkonto.',
+          seo_text: makeParagraphs([
+            'Setze hier ein neues Passwort für dein BarBae Kundenkonto.',
+            'Achte auf ein sicheres Passwort mit ausreichender Länge für den bestmöglichen Schutz deines Kontos.'
+          ]),
+          focus_keyword: 'Neues Passwort',
+          canonical_url: `${base}/account/reset-password`,
+          robots: 'noindex,nofollow'
+        },
+        'store-checkout-success': {
+          title: 'Bestellung erfolgreich',
+          meta_title: 'Bestellung erfolgreich | BarBae',
+          meta_description: 'Vielen Dank für deine Bestellung bei BarBae.',
+          seo_text: makeParagraphs([
+            'Vielen Dank für deine Bestellung bei BarBae. Deine Bestelldaten wurden erfolgreich übermittelt.',
+            'Du erhältst eine Bestellbestätigung sowie die Rechnung per E-Mail. In deinem Kundenkonto kannst du den Bestellverlauf jederzeit einsehen.'
+          ]),
+          focus_keyword: 'Bestellung erfolgreich',
+          canonical_url: `${base}/checkout/success`,
+          robots: 'noindex,nofollow'
+        }
+      };
+
+      if (presets[slug]) return presets[slug];
+
+      const pretty = titleCaseWords(slug || currentTitle || 'SEO Seite');
+      const pagePath = slug.startsWith('store-') ? slug.replace(/^store-/, '') : slug;
+      return {
+        title: currentTitle || pretty,
+        meta_title: `${pretty} | BarBae`,
+        meta_description: `${pretty} bei BarBae entdecken.`,
+        seo_text: makeParagraphs([
+          `${pretty} bei BarBae: Entdecke relevante Inhalte, hochwertige Informationen und eine klare Übersicht zur Seite.`,
+          'Passe diesen SEO-Text im Admin individuell an, um Suchintention und Inhalte besser abzubilden.'
+        ]),
+        focus_keyword: pretty,
+        canonical_url: `${base}/${pagePath}`.replace(/\/+$/, ''),
+        robots: 'index,follow'
+      };
+    }
+
+    function setValue(field, value, overwrite) {
+      if (!field || value == null) return;
+      const current = String(field.value || '').trim();
+      if (!overwrite && current) return;
+      field.value = String(value);
+    }
+
+    function applyPreset(overwrite) {
+      const slug = fields.slug ? fields.slug.value : '';
+      const currentTitle = fields.title ? fields.title.value : '';
+      const preset = pagePreset(slug, currentTitle);
+      Object.entries(preset).forEach(([key, value]) => setValue(fields[key], value, overwrite));
+    }
+
+    form.querySelectorAll('[data-seo-autofill]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const mode = button.getAttribute('data-seo-autofill');
+        applyPreset(mode === 'all');
+      });
+    });
+  })();
+</script>

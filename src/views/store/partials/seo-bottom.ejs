@@ -1,0 +1,12 @@
+<% if (typeof seoBottom !== 'undefined' && seoBottom && (seoBottom.title || seoBottom.text)) { %>
+  <section class="section seo-bottom-block" aria-label="SEO Information">
+    <div class="seo-bottom-inner">
+      <% if (seoBottom.title) { %>
+        <h2 class="visually-hidden"><%= seoBottom.title %></h2>
+      <% } %>
+      <% if (seoBottom.textHtml || seoBottom.text) { %>
+        <div class="seo-bottom-content"><%- seoBottom.textHtml || seoBottom.text %></div>
+      <% } %>
+    </div>
+  </section>
+<% } %>

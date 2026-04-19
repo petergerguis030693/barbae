@@ -1,0 +1,29 @@
+<div class="row g-3 mb-4">
+  <div class="col-12 col-md-6 col-xl-3"><div class="card"><div class="card-body"><div class="text-muted small">Produkte</div><div class="h3 mb-0"><%= data.kpis.products %></div></div></div></div>
+  <div class="col-12 col-md-6 col-xl-3"><div class="card"><div class="card-body"><div class="text-muted small">Bestellungen</div><div class="h3 mb-0"><%= data.kpis.orders %></div></div></div></div>
+  <div class="col-12 col-md-6 col-xl-3"><div class="card"><div class="card-body"><div class="text-muted small">Kunden</div><div class="h3 mb-0"><%= data.kpis.customers %></div></div></div></div>
+  <div class="col-12 col-md-6 col-xl-3"><div class="card"><div class="card-body"><div class="text-muted small">Umsatz</div><div class="h3 mb-0"><%= Number(data.kpis.revenue).toFixed(2) %> EUR</div></div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header">Letzte Bestellungen</div>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>#</th><th>Kunde</th><th>Status</th><th>Summe</th><th>Datum</th></tr></thead>
+      <tbody>
+        <% if (!data.kpis.recentOrders.length) { %>
+          <tr><td colspan="5" class="text-center text-muted py-3">Keine Daten vorhanden.</td></tr>
+        <% } %>
+        <% data.kpis.recentOrders.forEach((order) => { %>
+          <tr>
+            <td><%= order.order_number %></td>
+            <td><%= order.customer_name || '-' %></td>
+            <td><span class="badge text-bg-secondary"><%= order.status %></span></td>
+            <td><%= Number(order.total_amount).toFixed(2) %></td>
+            <td><%= new Date(order.created_at).toLocaleString('de-DE') %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

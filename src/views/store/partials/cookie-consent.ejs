@@ -1,0 +1,77 @@
+<link rel="stylesheet" href="/css/cookie-consent.css" />
+<style>
+  html.barbae-consent-stored #barbae-cookie-banner {
+    display: none !important;
+  }
+</style>
+<script>
+  window.__COOKIE_CONSENT__ = <%- JSON.stringify({ gaId: typeof gaMeasurementId !== 'undefined' ? gaMeasurementId : '' }) %>;
+  try {
+    if (localStorage.getItem('barbae_cookie_consent_v1')) {
+      document.documentElement.classList.add('barbae-consent-stored');
+    }
+  } catch (e) {}
+</script>
+
+<div id="barbae-cookie-banner" class="barbae-cookie-banner" role="dialog" aria-modal="false" aria-labelledby="barbae-cookie-title" aria-describedby="barbae-cookie-desc" data-nosnippet>
+  <div class="barbae-cookie-banner__inner">
+    <div class="barbae-cookie-banner__head">
+      <div class="barbae-cookie-banner__icon" aria-hidden="true">
+        <i class="bi bi-shield-lock"></i>
+      </div>
+      <div>
+        <h2 id="barbae-cookie-title" class="barbae-cookie-banner__title">Cookies &amp; Datenschutz</h2>
+        <p id="barbae-cookie-desc" class="barbae-cookie-banner__text">
+          Wir verwenden Cookies, um diese Website sicher bereitzustellen und – nur mit deiner Einwilligung – Nutzungsstatistiken
+          (z.&nbsp;B. Google Analytics) zu erfassen. Details findest du in unserer
+          <a href="#">Datenschutzerklärung</a>.
+        </p>
+      </div>
+    </div>
+    <div class="barbae-cookie-banner__actions">
+      <button type="button" class="barbae-cookie-btn barbae-cookie-btn--ghost" id="barbae-cookie-necessary">Nur notwendige</button>
+      <button type="button" class="barbae-cookie-btn barbae-cookie-btn--link" id="barbae-cookie-open-settings">Einstellungen</button>
+      <button type="button" class="barbae-cookie-btn barbae-cookie-btn--primary" id="barbae-cookie-accept-all">Alle akzeptieren</button>
+    </div>
+  </div>
+</div>
+
+<div id="barbae-cookie-modal" class="barbae-cookie-modal" hidden role="dialog" aria-modal="true" aria-labelledby="barbae-cookie-modal-title">
+  <div class="barbae-cookie-modal__card">
+    <div class="barbae-cookie-modal__header">
+      <h2 id="barbae-cookie-modal-title">Privatsphäre-Einstellungen</h2>
+      <button type="button" class="barbae-cookie-modal__close" id="barbae-cookie-modal-close" aria-label="Schließen">&times;</button>
+    </div>
+    <div class="barbae-cookie-modal__body">
+      <div class="barbae-cookie-category">
+        <div class="barbae-cookie-category__row">
+          <div>
+            <h3>Notwendig</h3>
+            <p>Diese Cookies sind für Grundfunktionen (z.&nbsp;B. Sitzung, Warenkorb, Sicherheit) erforderlich und können nicht abgewählt werden.</p>
+          </div>
+          <label class="barbae-cookie-switch" title="Immer aktiv">
+            <input type="checkbox" checked disabled />
+            <span class="barbae-cookie-switch__ui"></span>
+          </label>
+        </div>
+      </div>
+      <div class="barbae-cookie-category">
+        <div class="barbae-cookie-category__row">
+          <div>
+            <h3>Statistik</h3>
+            <p>Hilft uns zu verstehen, wie die Website genutzt wird (z.&nbsp;B. Google Analytics). Es werden nur nach Zustimmung Skripte geladen.</p>
+          </div>
+          <label class="barbae-cookie-switch">
+            <input type="checkbox" id="barbae-consent-statistics" />
+            <span class="barbae-cookie-switch__ui"></span>
+          </label>
+        </div>
+      </div>
+      <div class="barbae-cookie-modal__footer">
+        <button type="button" class="barbae-cookie-btn barbae-cookie-btn--primary" id="barbae-cookie-save-settings">Auswahl speichern</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="/js/cookie-consent.js" defer></script>

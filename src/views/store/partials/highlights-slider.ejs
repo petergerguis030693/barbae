@@ -1,0 +1,34 @@
+<section class="section highlights-section">
+  <div class="highlights-head">
+    <p>AUSGEWAEHLT FUER DICH</p>
+    <h3>Entdecke unsere Highlights</h3>
+    <span></span>
+  </div>
+
+  <div class="highlights-wrap">
+    <button type="button" class="highlights-nav highlights-prev" aria-label="Zurück">
+      <i class="bi bi-arrow-left"></i>
+    </button>
+
+    <div class="highlights-track" id="highlightsTrack">
+      <% featuredProducts.slice(0, 12).forEach((product, index) => { %>
+        <article class="highlight-card">
+          <div class="highlight-media">
+            <span class="highlight-badge"><%= product.is_bestseller ? 'Bestseller' : (index === 0 ? 'Neu' : 'Highlight') %></span>
+            <% if (product.imageUrl) { %>
+              <a href="<%= product.productUrl || '#' %>"><img src="<%= product.imageUrl %>" alt="<%= product.title %>" /></a>
+            <% } else { %>
+              <div class="tile-fallback"></div>
+            <% } %>
+          </div>
+          <h4><a href="<%= product.productUrl || '#' %>"><%= product.title %></a></h4>
+          <p><%= Number(product.price || 0).toFixed(2) %> EUR</p>
+        </article>
+      <% }) %>
+    </div>
+
+    <button type="button" class="highlights-nav highlights-next" aria-label="Weiter">
+      <i class="bi bi-arrow-right"></i>
+    </button>
+  </div>
+</section>

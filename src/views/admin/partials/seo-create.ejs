@@ -1,0 +1,88 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a class="btn btn-outline-secondary" href="/admin/seo">Zur SEO Liste</a>
+  <span class="text-muted small">Neue SEO Seite</span>
+</div>
+
+<form method="post" action="/admin/seo/create" class="row g-3 seo-form" data-seo-form>
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">SEO Inhalt</div>
+      <div class="card-body d-grid gap-3">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">Interner Titel</label>
+            <input class="form-control" name="title" required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Slug</label>
+            <input class="form-control" name="slug" required />
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">Meta Titel</label>
+          <input class="form-control" name="meta_title" maxlength="255" />
+        </div>
+
+        <div>
+          <label class="form-label">Meta Beschreibung</label>
+          <textarea class="form-control" rows="3" name="meta_description" maxlength="500"></textarea>
+        </div>
+
+        <div>
+          <label class="form-label">SEO Text</label>
+          <textarea class="form-control" rows="10" name="seo_text"></textarea>
+          <div class="form-text">HTML erlaubt (z. B. <code>&lt;p&gt;</code>, <code>&lt;strong&gt;</code>, <code>&lt;ul&gt;</code>, <code>&lt;li&gt;</code>, <code>&lt;h3&gt;</code>, <code>&lt;a&gt;</code>). Nicht erlaubte Tags werden entfernt.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 d-grid gap-3">
+    <div class="card">
+      <div class="card-header">SEO Details</div>
+      <div class="card-body d-grid gap-2">
+        <div>
+          <label class="form-label">Fokus Keyword</label>
+          <input class="form-control" name="focus_keyword" />
+        </div>
+        <div>
+          <label class="form-label">OG Titel</label>
+          <input class="form-control" name="og_title" />
+        </div>
+        <div>
+          <label class="form-label">OG Beschreibung</label>
+          <textarea class="form-control" rows="3" name="og_description"></textarea>
+        </div>
+        <div>
+          <label class="form-label">Canonical URL</label>
+          <input class="form-control" name="canonical_url" placeholder="https://example.com/..." />
+        </div>
+        <div>
+          <label class="form-label">Robots</label>
+          <select class="form-select" name="robots">
+            <option value="index,follow">index,follow</option>
+            <option value="noindex,follow">noindex,follow</option>
+            <option value="noindex,nofollow">noindex,nofollow</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">JSON-LD</div>
+      <div class="card-body">
+        <textarea class="form-control font-monospace" rows="8" name="json_ld" placeholder='{"@context":"https://schema.org"}'></textarea>
+      </div>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button class="btn btn-outline-secondary" type="button" data-seo-autofill="empty">Auto-Fill SEO (nur leere Felder)</button>
+      <button class="btn btn-outline-secondary" type="button" data-seo-autofill="all">Auto-Fill SEO (überschreiben)</button>
+      <button class="btn btn-dark" type="submit">SEO Seite anlegen</button>
+    </div>
+  </div>
+</form>
+
+<%- include('./seo-autofill-script') %>
+<%- include('./seo-ckeditor-script') %>

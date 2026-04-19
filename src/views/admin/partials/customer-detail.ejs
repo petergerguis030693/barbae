@@ -1,0 +1,147 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a class="btn btn-outline-secondary" href="/admin/customers">Zurueck zur Kundenliste</a>
+  <form method="post" action="/admin/customers/<%= data.customer.id %>/delete" onsubmit="return confirm('Kunde wirklich löschen? Nur möglich ohne Bestellungen.');">
+    <button type="submit" class="btn btn-outline-danger">Kunde löschen</button>
+  </form>
+</div>
+
+<div class="row g-3 mb-3">
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header">Kundendaten bearbeiten</div>
+      <div class="card-body">
+        <form method="post" action="/admin/customers/<%= data.customer.id %>/update" class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">Vorname</label>
+            <input class="form-control" name="first_name" value="<%= data.customer.first_name || '' %>" required />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Nachname</label>
+            <input class="form-control" name="last_name" value="<%= data.customer.last_name || '' %>" required />
+          </div>
+          <div class="col-12">
+            <label class="form-label">E-Mail</label>
+            <input class="form-control" type="email" name="email" value="<%= data.customer.email || '' %>" required />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Telefon</label>
+            <input class="form-control" name="phone" value="<%= data.customer.phone || '' %>" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Firmenname / Unternehmen</label>
+            <input class="form-control" name="company_name" value="<%= data.customer.company_name || '' %>" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">UID-Nummer</label>
+            <input class="form-control" name="uid_number" value="<%= data.customer.uid_number || '' %>" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">Wohnort (Strasse / Hausnummer)</label>
+            <input class="form-control" name="street" value="<%= data.customer.street || '' %>" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">PLZ</label>
+            <input class="form-control" name="postal_code" value="<%= data.customer.postal_code || '' %>" />
+          </div>
+          <div class="col-md-8">
+            <label class="form-label">Ort</label>
+            <input class="form-control" name="city" value="<%= data.customer.city || '' %>" />
+          </div>
+          <div class="col-12 d-grid">
+            <button class="btn btn-dark">Kundendaten speichern</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-7">
+    <div class="row g-3">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <div class="text-muted small">Kunde ID</div>
+            <div class="fw-semibold">#<%= data.customer.id %></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <div class="text-muted small">Bestellungen</div>
+            <div class="fw-semibold"><%= data.customer.order_count %></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <div class="text-muted small">Umsatz gesamt</div>
+            <div class="fw-semibold"><%= Number(data.customer.lifetime_value).toFixed(2) %> EUR</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="text-muted small">Registriert am</div>
+            <div class="fw-semibold"><%= new Date(data.customer.created_at).toLocaleString('de-DE') %></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="text-muted small">Firma</div>
+            <div class="fw-semibold"><%= data.customer.company_name || '-' %></div>
+            <div class="small text-muted">UID: <%= data.customer.uid_number || '-' %></div>
+          </div>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="card">
+          <div class="card-body">
+            <div class="text-muted small">Adresse</div>
+            <div class="fw-semibold"><%= data.customer.street || '-' %></div>
+            <div class="small text-muted"><%= data.customer.postal_code || '-' %> <%= data.customer.city || '' %></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header">Bestellhistorie</div>
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Bestellung</th>
+          <th>Status</th>
+          <th>Artikel</th>
+          <th>Summe</th>
+          <th>Datum</th>
+          <th>Aktion</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!data.orders.length) { %>
+          <tr>
+            <td colspan="6" class="text-center py-4 text-muted">Noch keine Bestellungen fuer diesen Kunden.</td>
+          </tr>
+        <% } %>
+        <% data.orders.forEach((order) => { %>
+          <tr>
+            <td><%= order.order_number %></td>
+            <td><span class="badge text-bg-secondary"><%= order.status %></span></td>
+            <td><%= order.item_count %> Positionen / <%= order.total_quantity %> Stk.</td>
+            <td><%= Number(order.total_amount).toFixed(2) %> <%= order.currency %></td>
+            <td><%= new Date(order.created_at).toLocaleString('de-DE') %></td>
+            <td><a class="btn btn-sm btn-outline-secondary" href="/admin/orders/<%= order.id %>">Zur Bestellung</a></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

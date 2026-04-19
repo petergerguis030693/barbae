@@ -1,0 +1,20 @@
+﻿<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Zeit</th><th>Empfänger</th><th>Betreff</th><th>Status</th><th>Kontext</th><th>Info</th></tr></thead>
+      <tbody>
+        <% data.logs.forEach((log) => { %>
+          <tr>
+            <td><%= new Date(log.created_at).toLocaleString('de-DE') %></td>
+            <td><%= log.recipient %></td>
+            <td><%= log.subject %></td>
+            <td><span class="badge <%= log.status === 'sent' ? 'text-bg-success' : 'text-bg-danger' %>"><%= log.status %></span></td>
+            <td><%= log.related_type || '-' %> #<%= log.related_id || '-' %></td>
+            <td class="small"><%= log.provider_message || '-' %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
+

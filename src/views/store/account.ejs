@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <%- include('./partials/head-seo', { title, seoMeta: (typeof seoMeta !== 'undefined' ? seoMeta : null) }) %>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/css/store.css" />
+  </head>
+  <body>
+    <%- include('./partials/header', { hideOnTop: false }) %>
+
+    <main class="section checkout-page account-page">
+      <h1>Kundenkonto</h1>
+      <% if (error) { %>
+        <div class="checkout-error"><%= error %></div>
+      <% } %>
+      <% if (success) { %>
+        <div class="checkout-success-note"><%= success %></div>
+      <% } %>
+      <% if (typeof verifyInfo !== 'undefined' && verifyInfo) { %>
+        <div class="checkout-success-note"><%= verifyInfo %></div>
+      <% } %>
+
+      <% if (!customerUser) { %>
+        <div class="checkout-auth-grid account-auth-grid">
+          <form method="post" action="/account/login" class="checkout-auth-card">
+            <h3>Einloggen</h3>
+            <input name="login_email" type="email" placeholder="E-Mail" required />
+            <input name="login_password" type="password" placeholder="Passwort" required />
+            <button type="submit" class="btn-solid">Einloggen</button>
+            <a href="/account/forgot-password" class="account-auth-link">Passwort vergessen?</a>
+          </form>
+
+          <form method="post" action="/account/register" class="checkout-auth-card">
+            <h3>Registrieren</h3>
+            <input name="first_name" placeholder="Vorname" required />
+            <input name="last_name" placeholder="Nachname" required />
+            <input name="email" type="email" placeholder="E-Mail" required />
+            <input name="password" type="password" placeholder="Passwort" required />
+            <button type="submit" class="btn-outline">Konto erstellen</button>
+          </form>
+
+          <form method="post" action="/account/resend-verification" class="checkout-auth-card">
+            <h3>E-Mail bestätigen</h3>
+            <input name="email" type="email" placeholder="E-Mail für Bestätigungslink" required />
+            <button type="submit" class="btn-outline">Bestätigungs-Mail senden</button>
+          </form>
+        </div>
+      <% } else { %>
+        <div class="account-shell">
+          <aside class="account-nav">
+            <div class="checkout-logged-in account-panel">
+              <div>
+                Eingeloggt als <strong><%= customerUser.email %></strong>
+              </div>
+              <form method="post" action="/account/logout">
+                <button type="submit" class="btn-outline">Abmelden</button>
+              </form>
+            </div>
+
+            <a href="/account?tab=overview" class="account-nav-link <%= activeTab === 'overview' ? 'active' : '' %>">Übersicht</a>
+            <a href="/account?tab=orders" class="account-nav-link <%= activeTab === 'orders' ? 'active' : '' %>">Bestellungen</a>
+            <a href="/account?tab=messages" class="account-nav-link <%= activeTab === 'messages' ? 'active' : '' %>">
+              Nachrichten
+              <% if (Number(unreadMessageCount || 0) > 0) { %><span class="account-badge"><%= unreadMessageCount %></span><% } %>
+            </a>
+            <a href="/account?tab=profile" class="account-nav-link <%= activeTab === 'profile' ? 'active' : '' %>">Profil</a>
+            <a href="/account?tab=addresses" class="account-nav-link <%= activeTab === 'addresses' ? 'active' : '' %>">Adressen</a>
+          </aside>
+
+          <section class="account-main">
+            <% if (activeTab === 'overview') { %>
+              <div class="account-grid">
+                <section class="account-card">
+                  <h3>Übersicht</h3>
+                  <div class="account-stat-list">
+                    <div><span>Bestellungen</span><strong><%= Number(profile?.order_count || 0) %></strong></div>
+                    <div><span>Warenkorb Positionen</span><strong><%= (cartItems || []).length %></strong></div>
+                    <div><span>Ungelesene Nachrichten</span><strong><%= Number(unreadMessageCount || 0) %></strong></div>
+                    <div><span>Kundenwert</span><strong><%= Number(profile?.lifetime_value || 0).toFixed(2) %> EUR</strong></div>
+                  </div>
+                </section>
+
+                <section class="account-card">
+                  <h3>Aktueller Warenkorb</h3>
+                  <% if (!cartItems || !cartItems.length) { %>
+                    <p>Dein serverseitiger Warenkorb ist leer.</p>
+                  <% } else { %>
+                    <ul class="account-mini-list">
+                      <% cartItems.slice(0, 4).forEach((item) => { %>
+                        <li>
+                          <span><%= item.qty %>x <%= item.title %></span>
+                          <strong><%= (Number(item.price || 0) * Number(item.qty || 0)).toFixed(2) %> EUR</strong>
+                        </li>
+                      <% }) %>
+                    </ul>
+                    <a class="btn-outline account-inline-btn" href="/" aria-label="Weiter shoppen">Weiter shoppen</a>
+                  <% } %>
+                </section>
+
+                <section class="account-card">
+                  <h3>Letzte Bestellung</h3>
+                  <% if (orders && orders.length) { %>
+                    <% const latest = orders[0]; %>
+                    <p><strong><%= latest.order_number %></strong></p>
+                    <p>Status: <%= latest.status || 'offen' %></p>
+                    <p>Summe: <%= Number(latest.total_amount || 0).toFixed(2) %> <%= latest.currency || 'EUR' %></p>
+                    <a class="btn-outline account-inline-btn" href="/account?tab=orders&order=<%= encodeURIComponent(latest.order_number) %>">Details ansehen</a>
+                  <% } else { %>
+                    <p>Noch keine Bestellung vorhanden.</p>
+                  <% } %>
+                </section>
+
+                <section class="account-card promo-card">
+                  <h3>Für dich empfohlen</h3>
+                  <p>Entdecke neue Highlights und Bestseller passend zu deinem Stil.</p>
+                  <div class="promo-actions">
+                    <a href="/" class="btn-solid">Zur Startseite</a>
+                    <a href="/beauty" class="btn-outline">Beauty entdecken</a>
+                  </div>
+                </section>
+              </div>
+            <% } %>
+
+            <% if (activeTab === 'orders') { %>
+              <section class="account-card">
+                <h3>Bestellungen</h3>
+                <% if (!orders || !orders.length) { %>
+                  <p>Du hast noch keine Bestellungen.</p>
+                <% } else { %>
+                  <div class="account-orders-table">
+                    <div class="account-orders-head">
+                      <span>Bestellung</span>
+                      <span>Datum</span>
+                      <span>Status</span>
+                      <span>Summe</span>
+                      <span></span>
+                    </div>
+                    <% orders.forEach((order) => { %>
+                      <div class="account-orders-row">
+                        <span><strong><%= order.order_number %></strong></span>
+                        <span><%= new Date(order.created_at).toLocaleDateString('de-AT') %></span>
+                        <span class="status-pill"><%= order.status || 'offen' %></span>
+                        <span><%= Number(order.total_amount || 0).toFixed(2) %> <%= order.currency || 'EUR' %></span>
+                        <a href="/account?tab=orders&order=<%= encodeURIComponent(order.order_number) %>">Details</a>
+                      </div>
+                    <% }) %>
+                  </div>
+                <% } %>
+              </section>
+
+              <% if (orderDetail && orderDetail.order) { %>
+                <section class="account-card">
+                  <h3>Bestelldetails: <%= orderDetail.order.order_number %></h3>
+                  <div class="account-detail-grid">
+                    <div>
+                      <p>Status: <strong><%= orderDetail.order.status || 'offen' %></strong></p>
+                      <p>Datum: <strong><%= new Date(orderDetail.order.created_at).toLocaleString('de-AT') %></strong></p>
+                    </div>
+                    <div>
+                      <p>Netto: <strong><%= Number(orderDetail.order.subtotal_net || 0).toFixed(2) %> EUR</strong></p>
+                      <p>MwSt.: <strong><%= Number(orderDetail.order.tax_amount || 0).toFixed(2) %> EUR</strong></p>
+                      <p>Brutto: <strong><%= Number(orderDetail.order.total_amount || 0).toFixed(2) %> EUR</strong></p>
+                    </div>
+                  </div>
+                    <ul class="account-order-items">
+                      <% (orderDetail.items || []).forEach((item) => { %>
+                        <li>
+                          <span>
+                            <%= item.quantity %>x <%= item.title || ('Produkt #' + item.product_id) %>
+                            <% if (item.option_summary) { %><br><small><%= item.option_summary %></small><% } %>
+                          </span>
+                          <strong><%= Number(item.total_price || 0).toFixed(2) %> EUR</strong>
+                        </li>
+                      <% }) %>
+                    </ul>
+                </section>
+              <% } %>
+            <% } %>
+
+            <% if (activeTab === 'messages') { %>
+              <section class="account-card">
+                <h3>Nachrichten</h3>
+                <% if (!messages || !messages.length) { %>
+                  <p>Du hast derzeit keine Nachrichten.</p>
+                <% } else { %>
+                  <div class="account-message-list">
+                    <% messages.forEach((msg) => { %>
+                      <article class="account-message-item <%= Number(msg.is_read) ? 'is-read' : 'is-unread' %>">
+                        <div class="account-message-meta">
+                          <span class="status-pill"><%= msg.kind === 'newsletter' ? 'Newsletter' : 'Nachricht' %></span>
+                          <small><%= new Date(msg.created_at).toLocaleString('de-AT') %></small>
+                        </div>
+                        <h4><%= msg.subject %></h4>
+                        <% if (msg.body_html) { %>
+                          <div class="account-message-body"><%- msg.body_html %></div>
+                        <% } else { %>
+                          <p class="account-message-body"><%= msg.body_text || '' %></p>
+                        <% } %>
+                      </article>
+                    <% }) %>
+                  </div>
+                <% } %>
+              </section>
+            <% } %>
+
+            <% if (activeTab === 'profile') { %>
+              <section class="account-card">
+                <h3>Profil bearbeiten</h3>
+                <form method="post" action="/account/profile" class="checkout-form account-form">
+                  <div class="checkout-grid">
+                    <input name="first_name" placeholder="Vorname" value="<%= profile?.first_name || '' %>" required />
+                    <input name="last_name" placeholder="Nachname" value="<%= profile?.last_name || '' %>" required />
+                    <input name="email" type="email" placeholder="E-Mail" value="<%= profile?.email || '' %>" required />
+                    <input name="phone" placeholder="Telefon" value="<%= profile?.phone || '' %>" />
+                    <input name="company_name" placeholder="Firma" value="<%= profile?.company_name || '' %>" />
+                    <input name="uid_number" placeholder="UID Nummer" value="<%= profile?.uid_number || '' %>" />
+                    <input name="street" placeholder="Straße" value="<%= profile?.street || '' %>" />
+                    <input name="postal_code" placeholder="PLZ" value="<%= profile?.postal_code || '' %>" />
+                    <input name="city" placeholder="Ort" value="<%= profile?.city || '' %>" />
+                  </div>
+                  <label class="account-checkbox">
+                    <input type="checkbox" name="newsletter_opt_in" value="1" <%= Number(profile?.newsletter_opt_in || 0) === 1 ? 'checked' : '' %> />
+                    Newsletter abonnieren (E-Mail)
+                  </label>
+                  <button type="submit" class="btn-solid">Profil speichern</button>
+                </form>
+              </section>
+            <% } %>
+
+            <% if (activeTab === 'addresses') { %>
+              <section class="account-card">
+                <h3>Adressen</h3>
+                <form method="post" action="/account/address" class="checkout-form account-form">
+                  <div class="checkout-grid">
+                    <input name="street" placeholder="Straße + Hausnummer" value="<%= profile?.street || '' %>" required />
+                    <input name="postal_code" placeholder="PLZ" value="<%= profile?.postal_code || '' %>" required />
+                    <input name="city" placeholder="Ort" value="<%= profile?.city || '' %>" required />
+                    <input name="phone" placeholder="Telefon" value="<%= profile?.phone || '' %>" />
+                    <input name="company_name" placeholder="Firma" value="<%= profile?.company_name || '' %>" />
+                    <input name="uid_number" placeholder="UID Nummer" value="<%= profile?.uid_number || '' %>" />
+                  </div>
+                  <button type="submit" class="btn-solid">Adresse speichern</button>
+                </form>
+              </section>
+            <% } %>
+          </section>
+        </div>
+      <% } %>
+      <%- include('./partials/seo-bottom', { seoBottom: (typeof seoBottom !== 'undefined' ? seoBottom : null) }) %>
+    </main>
+
+    <%- include('./partials/footer') %>
+
+    <script>
+      window.__STORE_DATA__ = {
+        searchItems: <%- JSON.stringify(searchItems).replace(/</g, '\\u003c') %>,
+        initialQuery: ""
+      };
+    </script>
+    <script src="/js/store.js"></script>
+  </body>
+  </html>

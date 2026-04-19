@@ -1,0 +1,23 @@
+<div class="card">
+  <div class="card-header">Globale Produktoptionen</div>
+  <div class="card-body">
+    <form method="post" action="/admin/product-options" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Farben (je Zeile eine)</label>
+        <textarea class="form-control" name="product_option_colors" rows="14" placeholder="Schwarz&#10;Silber&#10;Gold"><%= data.colors || '' %></textarea>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Groessen (je Zeile eine)</label>
+        <textarea class="form-control" name="product_option_sizes" rows="14" placeholder="XS&#10;S&#10;M&#10;L&#10;XL"><%= data.sizes || '' %></textarea>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Personalisierungsfelder (Textfelder, je Zeile eins)</label>
+        <textarea class="form-control" name="product_option_personalizations" rows="14" placeholder="Initialen&#10;Name&#10;Datum"><%= data.personalizationFields || '' %></textarea>
+      </div>
+      <div class="col-12 d-flex justify-content-between align-items-center">
+        <div class="small text-muted">Diese Optionen werden einheitlich im Produktformular verwendet.</div>
+        <button class="btn btn-dark" type="submit">Optionen speichern</button>
+      </div>
+    </form>
+  </div>
+</div>

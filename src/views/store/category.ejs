@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <%- include('./partials/head-seo', { title, seoMeta: (typeof seoMeta !== 'undefined' ? seoMeta : null) }) %>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="/css/store.css" />
+  </head>
+  <body>
+    <%- include('./partials/header', { hideOnTop: false }) %>
+
+    <main>
+      <% const heroCategory = (typeof mainCategory !== 'undefined' && mainCategory) ? mainCategory : selectedCategory; %>
+      <% const subcategoryList = (typeof mainSubcategories !== 'undefined' && Array.isArray(mainSubcategories)) ? mainSubcategories : childCategories; %>
+      <section class="category-hero">
+        <% if (heroCategory && heroCategory.imageUrl) { %>
+          <img src="<%= heroCategory.imageUrl %>" alt="<%= heroCategory.name %>" class="category-hero-image" />
+        <% } %>
+        <div class="category-hero-overlay">
+          <p>BARBAE</p>
+          <h1><%= heroCategory ? heroCategory.name : selectedCategory.name %></h1>
+          <span></span>
+        </div>
+      </section>
+
+      <section class="section category-intro">
+        <p class="category-breadcrumb">
+          <a href="/">Startseite</a>
+          <span>/</span>
+          <a href="<%= heroCategory ? heroCategory.url : selectedCategory.url %>"><%= heroCategory ? heroCategory.name : selectedCategory.name %></a>
+          <% if (parentCategory) { %>
+            <span>/</span>
+            <strong><%= selectedCategory.name %></strong>
+          <% } %>
+        </p>
+
+        <% if (subcategoryList.length) { %>
+          <div class="category-chip-row">
+            <% subcategoryList.forEach((item) => { %>
+              <a class="category-chip <%= Number(item.id) === Number(selectedCategory.id) ? 'active' : '' %>" href="<%= item.url %>"><%= item.name %></a>
+            <% }) %>
+          </div>
+        <% } else if (childCategories.length) { %>
+          <div class="category-chip-row">
+            <% childCategories.forEach((item) => { %>
+              <a class="category-chip" href="<%= item.url %>"><%= item.name %></a>
+            <% }) %>
+          </div>
+        <% } %>
+      </section>
+
+      <% if (!parentCategory && mainSubcategories && mainSubcategories.length) { %>
+        <section class="section categories-section">
+          <div class="section-head">
+            <h3>Unterkategorien</h3>
+          </div>
+          <div class="category-grid">
+            <% mainSubcategories.forEach((item) => { %>
+              <a class="category-tile" href="<%= item.url %>">
+                <% if (item.imageUrl) { %>
+                  <img src="<%= item.imageUrl %>" alt="<%= item.name %>" />
+                <% } else { %>
+                  <div class="tile-fallback"></div>
+                <% } %>
+                <span><%= item.name %></span>
+              </a>
+            <% }) %>
+          </div>
+        </section>
+      <% } %>
+
+      <%- include('./partials/products-grid', { query: '', productsTitle: `Produkte in ${selectedCategory.name}` }) %>
+      <%- include('./partials/seo-bottom', { seoBottom: (typeof seoBottom !== 'undefined' ? seoBottom : null) }) %>
+    </main>
+
+    <%- include('./partials/footer') %>
+
+    <script>
+      window.__STORE_DATA__ = {
+        searchItems: <%- JSON.stringify(searchItems).replace(/</g, '\\u003c') %>,
+        initialQuery: ""
+      };
+    </script>
+    <script src="/js/store.js"></script>
+  </body>
+</html>

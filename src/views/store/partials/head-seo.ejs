@@ -1,0 +1,28 @@
+<%
+  const headSeo = (typeof seoMeta !== 'undefined' && seoMeta) ? seoMeta : null;
+  const headTitle = (headSeo && headSeo.title) ? headSeo.title : (typeof title !== 'undefined' ? title : '');
+%>
+<title><%= headTitle %></title>
+<% if (headSeo && headSeo.description) { %>
+  <meta name="description" content="<%= headSeo.description %>" />
+<% } %>
+<% if (headSeo && headSeo.robots) { %>
+  <meta name="robots" content="<%= headSeo.robots %>" />
+<% } %>
+<% if (headSeo && headSeo.canonicalUrl) { %>
+  <link rel="canonical" href="<%= headSeo.canonicalUrl %>" />
+<% } %>
+<% if (headSeo) { %>
+  <meta property="og:type" content="<%= headSeo.ogType || 'website' %>" />
+  <% if (headSeo.canonicalUrl) { %><meta property="og:url" content="<%= headSeo.canonicalUrl %>" /><% } %>
+  <% if (headSeo.ogTitle || headTitle) { %><meta property="og:title" content="<%= headSeo.ogTitle || headTitle %>" /><% } %>
+  <% if (headSeo.ogDescription) { %><meta property="og:description" content="<%= headSeo.ogDescription %>" /><% } %>
+  <% if (headSeo.ogImage) { %><meta property="og:image" content="<%= headSeo.ogImage %>" /><% } %>
+  <meta name="twitter:card" content="summary_large_image" />
+  <% if (headSeo.ogTitle || headTitle) { %><meta name="twitter:title" content="<%= headSeo.ogTitle || headTitle %>" /><% } %>
+  <% if (headSeo.ogDescription) { %><meta name="twitter:description" content="<%= headSeo.ogDescription %>" /><% } %>
+  <% if (headSeo.ogImage) { %><meta name="twitter:image" content="<%= headSeo.ogImage %>" /><% } %>
+<% } %>
+<% if (headSeo && headSeo.jsonLd) { %>
+  <script type="application/ld+json"><%- headSeo.jsonLd %></script>
+<% } %>

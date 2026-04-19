@@ -1,0 +1,347 @@
+﻿<div class="d-flex justify-content-between align-items-center mb-3">
+  <div>
+    <div class="text-muted small">Produkte</div>
+    <div class="small">
+      <% if (data.mode === 'edit') { %>
+        Du bearbeitest Produkt-ID <strong>#<%= data.product.id %></strong>
+      <% } else { %>
+        Neues Produkt anlegen
+      <% } %>
+    </div>
+  </div>
+  <a class="btn btn-outline-secondary" href="/admin/products">Zur Übersicht</a>
+</div>
+
+<form method="post" action="<%= data.formAction %>" enctype="multipart/form-data" class="row g-3">
+  <input type="hidden" name="color_stock_json" id="color_stock_json" value="<%= data.product.color_stock_json || '{}' %>" />
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">Inhalt</div>
+      <div class="card-body d-grid gap-3">
+        <div>
+          <label class="form-label">Produkttitel</label>
+          <input class="form-control form-control-lg" name="title" value="<%= data.product.title || '' %>" required />
+        </div>
+
+        <div>
+          <label class="form-label">Beschreibung</label>
+          <textarea class="form-control" name="description" rows="7" placeholder="Produktbeschreibung..."><%= data.product.description || '' %></textarea>
+        </div>
+
+        <div class="row g-2">
+          <div class="col-md-4">
+            <label class="form-label">Slug (URL)</label>
+            <input class="form-control" name="slug" value="<%= data.product.slug || '' %>" placeholder="produkt-slug" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">SKU</label>
+            <input class="form-control" name="sku" value="<%= data.product.sku || '' %>" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Preis</label>
+            <input class="form-control" type="number" step="0.01" name="price" value="<%= data.product.price ?? '0.00' %>" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Lagerbestand</label>
+            <input class="form-control" type="number" name="stock" value="<%= data.product.stock ?? 0 %>" required />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label">Gewicht (g)</label>
+            <input class="form-control" type="number" min="0" step="1" name="weight_grams" value="<%= data.product.weight_grams ?? 0 %>" required />
+            <div class="form-text">Für automatische Versandberechnung (z. B. Österreichische Post).</div>
+          </div>
+        </div>
+
+        <hr class="my-1" />
+        <h2 class="h6 mb-0">SEO für Produktseite</h2>
+        <div class="row g-2">
+          <div class="col-12">
+            <label class="form-label">SEO Titel</label>
+            <input class="form-control" name="seo_title" value="<%= data.product.seo_title || '' %>" maxlength="255" placeholder="Titel für Suchmaschinen" />
+          </div>
+          <div class="col-12">
+            <label class="form-label">SEO Beschreibung</label>
+            <textarea class="form-control" name="seo_description" rows="3" maxlength="500" placeholder="Meta Description"><%= data.product.seo_description || '' %></textarea>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Fokus Keyword</label>
+            <input class="form-control" name="focus_keyword" value="<%= data.product.focus_keyword || '' %>" placeholder="z. B. led schreibtischlampe" />
+          </div>
+          <div class="col-md-6">
+            <div class="small text-muted mt-4">
+              Empfehlung:
+              <strong>SEO Titel</strong> 50-60 Zeichen,
+              <strong>Beschreibung</strong> 140-160 Zeichen.
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label">SEO Text</label>
+            <textarea class="form-control" name="seo_text" rows="6" placeholder="Ausführlicher SEO-Text für die spätere Frontend-Produktseite"><%= data.product.seo_text || '' %></textarea>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 d-grid gap-3">
+    <div class="card">
+      <div class="card-header">Varianten & Personalisierung</div>
+      <div class="card-body d-grid gap-3">
+        <div class="small text-muted">
+          Globale Optionen werden unter <a href="/admin/product-options">Produktoptionen</a> gepflegt.
+        </div>
+
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="has_size_options" id="has_size_options" <%= Number(data.product.has_size_options) ? 'checked' : '' %> />
+          <label class="form-check-label" for="has_size_options">Groessen verfuegbar</label>
+        </div>
+        <div id="size_option_list" class="border rounded p-2 bg-light">
+          <% if ((data.optionConfig.sizes || []).length) { %>
+            <% data.optionConfig.sizes.forEach((size) => { %>
+              <span class="badge text-bg-secondary me-1 mb-1"><%= size %></span>
+            <% }) %>
+          <% } else { %>
+            <span class="text-muted small">Keine globalen Groessen hinterlegt.</span>
+          <% } %>
+        </div>
+
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="has_color_options" id="has_color_options" <%= Number(data.product.has_color_options) ? 'checked' : '' %> />
+          <label class="form-check-label" for="has_color_options">Farben verfuegbar</label>
+        </div>
+        <div id="color_stock_wrapper" class="border rounded p-2">
+          <% if ((data.optionConfig.colors || []).length) { %>
+            <div class="small text-muted mb-2">Lager je Farbe</div>
+            <% data.optionConfig.colors.forEach((color) => { %>
+              <% const qty = Number(data.colorStockByColor[color] || 0); %>
+              <div class="row g-2 align-items-center mb-2 color-stock-row">
+                <div class="col-7">
+                  <div class="form-check m-0">
+                    <input
+                      class="form-check-input color-stock-enabled"
+                      type="checkbox"
+                      id="color_enabled_<%= color.replace(/\s+/g, '_') %>"
+                      data-color="<%= color %>"
+                      <%= qty > 0 ? 'checked' : '' %>
+                    />
+                    <label class="form-check-label" for="color_enabled_<%= color.replace(/\s+/g, '_') %>"><%= color %></label>
+                  </div>
+                </div>
+                <div class="col-5">
+                  <input
+                    class="form-control form-control-sm color-stock-qty"
+                    type="number"
+                    min="0"
+                    step="1"
+                    data-color="<%= color %>"
+                    value="<%= qty > 0 ? qty : 0 %>"
+                  />
+                </div>
+              </div>
+            <% }) %>
+          <% } else { %>
+            <span class="text-muted small">Keine globalen Farben hinterlegt.</span>
+          <% } %>
+        </div>
+
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="has_personalization_options" id="has_personalization_options" <%= Number(data.product.has_personalization_options) ? 'checked' : '' %> />
+          <label class="form-check-label" for="has_personalization_options">Personalisierung verfuegbar</label>
+        </div>
+        <div id="personalization_option_list" class="border rounded p-2 bg-light">
+          <% if ((data.optionConfig.personalizationFields || []).length) { %>
+            <% data.optionConfig.personalizationFields.forEach((fieldName) => { %>
+              <span class="badge text-bg-info me-1 mb-1"><%= fieldName %></span>
+            <% }) %>
+          <% } else { %>
+            <span class="text-muted small">Keine globalen Personalisierungsfelder hinterlegt.</span>
+          <% } %>
+        </div>
+        <input type="hidden" name="personalization_type" id="personalization_type" value="<%= data.product.personalization_type || 'none' %>" />
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Veröffentlichen</div>
+      <div class="card-body d-grid gap-3">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="is_active" id="is_active" <%= Number(data.product.is_active) ? 'checked' : '' %> />
+          <label class="form-check-label" for="is_active">Produkt aktiv</label>
+        </div>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="is_bestseller" id="is_bestseller" <%= Number(data.product.is_bestseller) ? 'checked' : '' %> />
+          <label class="form-check-label" for="is_bestseller">Als Bestseller markieren</label>
+        </div>
+        <button class="btn btn-dark" type="submit"><%= data.submitLabel %></button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Kategorie</div>
+      <div class="card-body">
+        <select class="form-select" name="category_id">
+          <option value="">Keine Kategorie</option>
+          <% data.categories.forEach((cat) => { %>
+            <option value="<%= cat.id %>" <%= Number(data.product.category_id) === Number(cat.id) ? 'selected' : '' %>><%= cat.name %></option>
+          <% }) %>
+        </select>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Titelbild</div>
+      <div class="card-body d-grid gap-2">
+        <% if (data.product.featured_image) { %>
+          <img src="/admin<%= data.product.featured_image %>" alt="" class="img-fluid rounded border" id="featuredPreviewCurrent" />
+        <% } %>
+        <input class="form-control" type="file" name="featured_image" id="featuredImageInput" accept="image/*" />
+        <div id="featuredPreviewWrapper" class="d-none">
+          <div class="small text-muted">Vorschau neues Titelbild</div>
+          <img id="featuredPreviewNew" alt="Vorschau Titelbild" class="img-fluid rounded border" />
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">Galerie</div>
+      <div class="card-body d-grid gap-2">
+        <% if (data.gallery.length) { %>
+          <div class="row g-2">
+            <% data.gallery.forEach((image) => { %>
+              <div class="col-4">
+                <img src="/admin<%= image.image_path %>" alt="" class="img-fluid rounded border" />
+              </div>
+            <% }) %>
+          </div>
+        <% } %>
+        <input class="form-control" type="file" name="gallery" id="galleryInput" multiple accept="image/*" />
+        <div id="galleryPreviewWrapper" class="d-none">
+          <div class="small text-muted">Vorschau neue Galerie</div>
+          <div id="galleryPreviewGrid" class="row g-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+  (function () {
+    const featuredInput = document.getElementById('featuredImageInput');
+    const featuredPreviewWrapper = document.getElementById('featuredPreviewWrapper');
+    const featuredPreviewNew = document.getElementById('featuredPreviewNew');
+
+    if (featuredInput && featuredPreviewWrapper && featuredPreviewNew) {
+      featuredInput.addEventListener('change', () => {
+        const file = featuredInput.files && featuredInput.files[0];
+        if (!file) {
+          featuredPreviewWrapper.classList.add('d-none');
+          featuredPreviewNew.removeAttribute('src');
+          return;
+        }
+
+        const objectUrl = URL.createObjectURL(file);
+        featuredPreviewNew.src = objectUrl;
+        featuredPreviewWrapper.classList.remove('d-none');
+      });
+    }
+
+    const galleryInput = document.getElementById('galleryInput');
+    const galleryPreviewWrapper = document.getElementById('galleryPreviewWrapper');
+    const galleryPreviewGrid = document.getElementById('galleryPreviewGrid');
+
+    if (galleryInput && galleryPreviewWrapper && galleryPreviewGrid) {
+      galleryInput.addEventListener('change', () => {
+        const files = Array.from(galleryInput.files || []);
+        galleryPreviewGrid.innerHTML = '';
+
+        if (!files.length) {
+          galleryPreviewWrapper.classList.add('d-none');
+          return;
+        }
+
+        files.forEach((file) => {
+          const col = document.createElement('div');
+          col.className = 'col-4';
+
+          const img = document.createElement('img');
+          img.className = 'img-fluid rounded border';
+          img.alt = 'Vorschau Galerie';
+          img.src = URL.createObjectURL(file);
+
+          col.appendChild(img);
+          galleryPreviewGrid.appendChild(col);
+        });
+
+        galleryPreviewWrapper.classList.remove('d-none');
+      });
+    }
+
+    const form = document.querySelector('form[action]');
+    const sizeToggle = document.getElementById('has_size_options');
+    const sizeList = document.getElementById('size_option_list');
+    const colorToggle = document.getElementById('has_color_options');
+    const colorStockWrapper = document.getElementById('color_stock_wrapper');
+    const colorStockEnabled = Array.from(document.querySelectorAll('.color-stock-enabled'));
+    const colorStockQtyInputs = Array.from(document.querySelectorAll('.color-stock-qty'));
+    const colorStockJson = document.getElementById('color_stock_json');
+    const personalizationToggle = document.getElementById('has_personalization_options');
+    const personalizationList = document.getElementById('personalization_option_list');
+    const personalizationType = document.getElementById('personalization_type');
+
+    const syncSizeToggle = () => {
+      if (!sizeToggle || !sizeList) return;
+      sizeList.classList.toggle('opacity-50', !sizeToggle.checked);
+    };
+
+    const syncColorRows = () => {
+      const enabledGlobal = colorToggle && colorToggle.checked;
+      if (colorStockWrapper) {
+        colorStockWrapper.classList.toggle('opacity-50', !enabledGlobal);
+      }
+      colorStockEnabled.forEach((checkbox) => {
+        checkbox.disabled = !enabledGlobal;
+      });
+      colorStockQtyInputs.forEach((input) => {
+        const rowEnabled = enabledGlobal && !!colorStockEnabled.find((box) => box.dataset.color === input.dataset.color && box.checked);
+        input.disabled = !rowEnabled;
+        if (!rowEnabled) {
+          input.value = '0';
+        }
+      });
+    };
+
+    const syncPersonalizationToggle = () => {
+      if (!personalizationToggle || !personalizationList || !personalizationType) return;
+      const enabled = personalizationToggle.checked;
+      personalizationList.classList.toggle('opacity-50', !enabled);
+      personalizationType.value = enabled ? 'name' : 'none';
+    };
+
+    if (sizeToggle) sizeToggle.addEventListener('change', syncSizeToggle);
+    if (colorToggle) colorToggle.addEventListener('change', syncColorRows);
+    if (personalizationToggle) personalizationToggle.addEventListener('change', syncPersonalizationToggle);
+    colorStockEnabled.forEach((checkbox) => checkbox.addEventListener('change', syncColorRows));
+
+    if (form && colorStockJson) {
+      form.addEventListener('submit', () => {
+        const payload = {};
+        if (colorToggle && colorToggle.checked) {
+          colorStockEnabled.forEach((checkbox) => {
+            if (!checkbox.checked) return;
+            const color = checkbox.dataset.color;
+            const qtyInput = colorStockQtyInputs.find((item) => item.dataset.color === color);
+            const qty = Number(qtyInput ? qtyInput.value : 0);
+            if (Number.isFinite(qty) && qty > 0) {
+              payload[color] = Math.floor(qty);
+            }
+          });
+        }
+        colorStockJson.value = JSON.stringify(payload);
+      });
+    }
+
+    syncSizeToggle();
+    syncColorRows();
+    syncPersonalizationToggle();
+  })();
+</script>

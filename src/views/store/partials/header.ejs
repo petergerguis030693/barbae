@@ -1,0 +1,94 @@
+<header class="store-header <%= hideOnTop ? 'hide-on-top' : '' %>">
+<% const headerCustomerUser = (typeof customerUser !== 'undefined' ? customerUser : (typeof locals !== 'undefined' ? locals.customerUser : null)); %>
+  <div class="header-main">
+    <nav class="header-main-links">
+      <% menuMainCategories.forEach((category) => { %>
+        <a href="<%= category.url %>"><%= category.name %></a>
+      <% }) %>
+    </nav>
+
+    <a class="brand" href="/">Bar<span>Bae</span></a>
+
+    <div class="header-actions">
+      <button id="searchToggle" class="icon-button" type="button" aria-label="Suche öffnen">
+        <i class="bi bi-search"></i>
+      </button>
+      <a
+        href="/account"
+        class="icon-button account-button"
+        aria-label="<%= headerCustomerUser ? 'Konto �ffnen' : 'Einloggen oder registrieren' %>"
+        title="<%= headerCustomerUser ? ('Eingeloggt als ' + (headerCustomerUser.email || 'Kunde')) : 'Konto' %>"
+      >
+        <i class="bi <%= headerCustomerUser ? 'bi-person-check' : 'bi-person' %>"></i>
+      </a>
+      <button id="cartToggle" class="icon-button cart-button" type="button" aria-label="Warenkorb öffnen">
+        <i class="bi bi-bag"></i>
+        <span id="cartCount" class="cart-count">0</span>
+      </button>
+    </div>
+  </div>
+
+  <%
+    const subnavGroupsMap = new Map();
+    const parentSortOrder = new Map((menuMainCategories || []).map((category, index) => [String(category.id), index]));
+    (menuSubcategories || []).forEach((subcategory, index) => {
+      const parentKey = String(subcategory.parent_id || '');
+      if (!subnavGroupsMap.has(parentKey)) {
+        subnavGroupsMap.set(parentKey, { parentKey, index, items: [] });
+      }
+      subnavGroupsMap.get(parentKey).items.push(subcategory);
+    });
+    const subnavGroups = Array.from(subnavGroupsMap.values()).sort((a, b) => {
+      const aOrder = parentSortOrder.has(a.parentKey) ? parentSortOrder.get(a.parentKey) : Number.MAX_SAFE_INTEGER;
+      const bOrder = parentSortOrder.has(b.parentKey) ? parentSortOrder.get(b.parentKey) : Number.MAX_SAFE_INTEGER;
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return a.index - b.index;
+    });
+  %>
+  <div class="header-subnav">
+    <% subnavGroups.forEach((group, groupIndex) => { %>
+      <% if (groupIndex > 0) { %>
+        <span class="header-subnav-group-separator" aria-hidden="true">|</span>
+      <% } %>
+      <div class="header-subnav-group">
+        <% group.items.forEach((subcategory) => { %>
+          <a href="<%= subcategory.url %>"><%= subcategory.name %></a>
+        <% }) %>
+      </div>
+    <% }) %>
+  </div>
+
+  <form id="searchPanel" class="search-panel" method="get" action="/">
+    <input
+      id="searchInput"
+      type="search"
+      name="q"
+      value="<%= query || '' %>"
+      autocomplete="off"
+      placeholder="Produkte, Kategorien, Sets ..."
+      aria-label="Suche"
+    />
+    <button type="submit" class="search-submit">Suchen</button>
+    <ul id="searchSuggestions" class="search-suggestions"></ul>
+  </form>
+
+  <aside id="cartPanel" class="cart-panel" aria-hidden="true">
+    <div class="cart-head">
+      <h4>Warenkorb</h4>
+      <button id="cartClose" type="button" class="icon-button" aria-label="Warenkorb schließen">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div id="cartItems" class="cart-items"></div>
+    <div class="cart-foot">
+      <div class="cart-line"><span>Netto</span><strong id="cartNet">0.00 EUR</strong></div>
+      <div class="cart-line"><span>MwSt. (20%)</span><strong id="cartTax">0.00 EUR</strong></div>
+      <div class="cart-line total"><span>Brutto</span><strong id="cartTotal">0.00 EUR</strong></div>
+      <a href="/checkout" class="cart-checkout-btn">Zur Kasse</a>
+    </div>
+  </aside>
+  <div id="cartBackdrop" class="cart-backdrop" aria-hidden="true"></div>
+</header>
+
+
+

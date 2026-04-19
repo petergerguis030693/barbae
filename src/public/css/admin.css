@@ -1,0 +1,78 @@
+body {
+  background: #f5f6fa;
+  color: #1e293b;
+}
+
+.admin-sidebar {
+  width: 280px;
+  background: #ffffff;
+  transition: width 0.2s ease;
+  overflow-x: hidden;
+}
+
+.admin-sidebar .nav-link {
+  color: #334155;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.admin-sidebar .nav-link:hover {
+  background: #eef2ff;
+  color: #1e1b4b;
+}
+
+.admin-sidebar .nav-link.active {
+  background: #0f172a;
+  color: #fff;
+}
+
+.admin-sidebar .menu-label,
+.admin-sidebar .sidebar-brand {
+  white-space: nowrap;
+}
+
+.admin-sidebar .sidebar-toggle {
+  flex-shrink: 0;
+}
+
+.admin-sidebar.collapsed {
+  width: 82px;
+}
+
+.admin-sidebar.collapsed .menu-label,
+.admin-sidebar.collapsed .sidebar-brand {
+  display: none;
+}
+
+.admin-sidebar.collapsed .nav-link {
+  justify-content: center;
+  gap: 0;
+}
+
+.admin-sidebar.collapsed .nav-link i {
+  font-size: 1.1rem;
+}
+
+.admin-login-body {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #dbeafe 0%, #f8fafc 100%);
+}
+
+@media (max-width: 991px) {
+  .admin-sidebar {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .admin-sidebar.collapsed {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .admin-sidebar .menu-label,
+  .admin-sidebar .sidebar-brand {
+    display: inline;
+  }
+}

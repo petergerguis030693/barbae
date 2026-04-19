@@ -1,0 +1,21 @@
+<div class="card">
+  <div class="table-responsive">
+    <table class="table table-sm align-middle mb-0">
+      <thead><tr><th>Produkt</th><th>SKU</th><th>Bestand</th><th>Status</th></tr></thead>
+      <tbody>
+        <% data.inventory.forEach((item) => { %>
+          <tr>
+            <td><%= item.title %></td>
+            <td><%= item.sku || '-' %></td>
+            <td><%= item.stock %></td>
+            <td>
+              <% if (item.stock_state === 'out') { %><span class="badge text-bg-danger">Ausverkauft</span><% } %>
+              <% if (item.stock_state === 'low') { %><span class="badge text-bg-warning">Niedrig</span><% } %>
+              <% if (item.stock_state === 'ok') { %><span class="badge text-bg-success">OK</span><% } %>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>
