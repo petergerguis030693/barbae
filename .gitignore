@@ -1,7 +1,6 @@
 # Secrets & lokale Konfiguration (nie committen)
 .env
 .env.*
-!.env.example
 
 # Abhängigkeiten
 node_modules/
