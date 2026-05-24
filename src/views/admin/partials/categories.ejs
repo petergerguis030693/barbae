@@ -77,9 +77,20 @@
                 <span class="text-muted">-</span>
               <% } %>
             </td>
-            <td><span class="badge text-bg-dark">Hauptkategorie</span></td>
+            <td>
+              <span class="badge text-bg-dark">Hauptkategorie</span>
+              <% if (Number(root.is_coming_soon) === 1) { %>
+                <span class="badge text-bg-warning ms-1">Coming Soon</span>
+              <% } %>
+            </td>
             <td class="text-end">
               <div class="d-inline-flex gap-2">
+                <form method="post" action="/admin/categories/<%= root.id %>/coming-soon">
+                  <input type="hidden" name="value" value="<%= Number(root.is_coming_soon) === 1 ? 0 : 1 %>" />
+                  <button class="btn btn-sm <%= Number(root.is_coming_soon) === 1 ? 'btn-warning' : 'btn-outline-warning' %>" title="Coming Soon umschalten">
+                    <%= Number(root.is_coming_soon) === 1 ? 'Coming Soon aus' : 'Coming Soon an' %>
+                  </button>
+                </form>
                 <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#editCategory<%= root.id %>">Bearbeiten</button>
                 <form method="post" action="/admin/categories/<%= root.id %>/delete" onsubmit="return confirm('Kategorie löschen? Unterkategorien werden auf Parent NULL gesetzt.')">
                   <button class="btn btn-sm btn-outline-danger">Löschen</button>

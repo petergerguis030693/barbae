@@ -38,10 +38,29 @@
 
           <form method="post" action="/account/register" class="checkout-auth-card">
             <h3>Registrieren</h3>
-            <input name="first_name" placeholder="Vorname" required />
-            <input name="last_name" placeholder="Nachname" required />
-            <input name="email" type="email" placeholder="E-Mail" required />
-            <input name="password" type="password" placeholder="Passwort" required />
+            <input name="first_name" placeholder="Vorname" required autocomplete="given-name" value="<%= (registerForm && registerForm.first_name) || '' %>" />
+            <input name="last_name" placeholder="Nachname" required autocomplete="family-name" value="<%= (registerForm && registerForm.last_name) || '' %>" />
+            <input name="email" type="email" placeholder="E-Mail" required autocomplete="email" value="<%= (registerForm && registerForm.email) || '' %>" />
+            <input name="password" type="password" placeholder="Passwort (min. 8 Zeichen)" required autocomplete="new-password" minlength="8" />
+            <% if (registerCaptcha) { %>
+              <label class="register-captcha">
+                <span class="register-captcha-label">Sicherheitsfrage: Was ergibt <strong><%= registerCaptcha.question %></strong> ?</span>
+                <input
+                  name="captcha_answer"
+                  type="text"
+                  inputmode="numeric"
+                  pattern="-?[0-9]+"
+                  required
+                  autocomplete="off"
+                  placeholder="Ergebnis eingeben"
+                />
+              </label>
+              <div class="register-honeypot" aria-hidden="true">
+                <label>Website (bitte freilassen)
+                  <input type="text" name="website" tabindex="-1" autocomplete="off" />
+                </label>
+              </div>
+            <% } %>
             <button type="submit" class="btn-outline">Konto erstellen</button>
           </form>
 

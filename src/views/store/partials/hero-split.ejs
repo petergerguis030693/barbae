@@ -4,25 +4,43 @@
     <% const parts = rawName.split('&').map((x) => x.trim()).filter(Boolean); %>
     <% const mainTitle = parts[0] || rawName; %>
     <% const subTitle = parts.length > 1 ? `& ${parts.slice(1).join(' & ')}` : ''; %>
-    <article class="hero-card <%= idx === 0 ? 'hero-left' : 'hero-right' %>">
+    <% const isComingSoon = Number(category.is_coming_soon) === 1; %>
+    <article class="hero-card <%= idx === 0 ? 'hero-left' : 'hero-right' %><%= isComingSoon ? ' hero-card-coming-soon' : '' %>">
       <% if (category.imageUrl) { %>
         <img src="<%= category.imageUrl %>" alt="<%= category.name %>" />
       <% } else { %>
         <div class="hero-fallback"></div>
       <% } %>
       <div class="hero-overlay">
-        <p>ENTDECKE</p>
-        <h2><a href="<%= category.url %>"><%= mainTitle %></a></h2>
-        <% if (subTitle) { %>
-          <h3><a href="<%= category.url %>"><%= subTitle %></a></h3>
-        <% } %>
-        <span class="hero-divider"></span>
-        <% if (category.subcategories.length) { %>
-          <div class="hero-tags">
-            <% category.subcategories.forEach((item) => { %>
-              <span><a href="<%= item.url %>"><%= item.name %></a></span>
-            <% }) %>
-          </div>
+        <% if (isComingSoon) { %>
+          <span class="hero-coming-soon">Coming Soon</span>
+          <p>ENTDECKE</p>
+          <h2><span><%= mainTitle %></span></h2>
+          <% if (subTitle) { %>
+            <h3><span><%= subTitle %></span></h3>
+          <% } %>
+          <span class="hero-divider"></span>
+          <% if (category.subcategories.length) { %>
+            <div class="hero-tags">
+              <% category.subcategories.forEach((item) => { %>
+                <span><span><%= item.name %></span></span>
+              <% }) %>
+            </div>
+          <% } %>
+        <% } else { %>
+          <p>ENTDECKE</p>
+          <h2><a href="<%= category.url %>"><%= mainTitle %></a></h2>
+          <% if (subTitle) { %>
+            <h3><a href="<%= category.url %>"><%= subTitle %></a></h3>
+          <% } %>
+          <span class="hero-divider"></span>
+          <% if (category.subcategories.length) { %>
+            <div class="hero-tags">
+              <% category.subcategories.forEach((item) => { %>
+                <span><a href="<%= item.url %>"><%= item.name %></a></span>
+              <% }) %>
+            </div>
+          <% } %>
         <% } %>
       </div>
     </article>

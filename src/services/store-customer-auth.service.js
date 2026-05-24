@@ -54,6 +54,8 @@ async function getCustomerById(id) {
   return rows[0] || null;
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 async function registerCustomer(payload) {
   await ensureCustomerAuthColumns();
   const email = String(payload.email || '').trim().toLowerCase();
@@ -61,8 +63,23 @@ async function registerCustomer(payload) {
   const firstName = String(payload.first_name || '').trim();
   const lastName = String(payload.last_name || '').trim();
 
-  if (!email || !password || !firstName || !lastName) {
-    throw new Error('missing-fields');
+  if (!firstName) {
+    throw new Error('missing-first-name');
+  }
+  if (!lastName) {
+    throw new Error('missing-last-name');
+  }
+  if (!email) {
+    throw new Error('missing-email');
+  }
+  if (!EMAIL_REGEX.test(email)) {
+    throw new Error('invalid-email');
+  }
+  if (!password) {
+    throw new Error('missing-password');
+  }
+  if (password.length < 8) {
+    throw new Error('password-too-short');
   }
 
   const existing = await findCustomerByEmail(email);
@@ -76,8 +93,11 @@ async function registerCustomer(payload) {
     await query(
       `UPDATE customers
        SET first_name = ?, last_name = ?, password_hash = ?, phone = ?, street = ?, postal_code = ?, city = ?, company_name = ?, uid_number = ?,
-           email_verified_at = NULL, email_verification_token_hash = NULL, email_verification_expires_at = NULL,
-           password_reset_token_hash = NULL, password_reset_expires_at = NULL
+           email_verified_at = NULL,
+           email_verification_token_hash = NULL,
+           email_verification_expires_at = NULL,
+           password_reset_token_hash = NULL,
+           password_reset_expires_at = NULL
        WHERE id = ?`,
       [
         firstName,

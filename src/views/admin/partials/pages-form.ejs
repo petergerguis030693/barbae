@@ -1,0 +1,78 @@
+<% const isEdit = Boolean(data.page); %>
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <a class="btn btn-outline-secondary" href="/admin/pages">Zurück zur Übersicht</a>
+</div>
+
+<form
+  method="post"
+  action="<%= isEdit ? `/admin/pages/${data.page.id}/update` : '/admin/pages/create' %>"
+  class="row g-3 pages-form"
+  data-pages-form
+>
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header">Inhalt</div>
+      <div class="card-body d-grid gap-3">
+        <div class="row g-2">
+          <div class="col-md-6">
+            <label class="form-label">Seitentitel</label>
+            <input class="form-control" name="title" value="<%= isEdit ? data.page.title : '' %>" required placeholder="z. B. Impressum" />
+          </div>
+          <div class="col-md-6">
+            <label class="form-label">Slug (URL)</label>
+            <input
+              class="form-control"
+              name="slug"
+              value="<%= isEdit ? data.page.slug : '' %>"
+              required
+              placeholder="impressum"
+              pattern="[^/\\s]+"
+              title="Ohne Slash, z. B. impressum oder agb"
+            />
+            <div class="form-text">Öffentliche Adresse: <code>https://deine-domain/<strong>slug</strong></code> — nur Kleinbuchstaben, Bindestriche, keine Leerzeichen.</div>
+          </div>
+        </div>
+
+        <div>
+          <label class="form-label">Text (Editor)</label>
+          <textarea class="form-control" rows="14" name="seo_text" id="pagesBodyHtml"><%= isEdit ? (data.page.seo_text || '') : '' %></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-4 d-grid gap-3">
+    <div class="card">
+      <div class="card-header">Meta &amp; Sichtbarkeit</div>
+      <div class="card-body d-grid gap-2">
+        <div>
+          <label class="form-label">Meta-Titel (Browser / Google)</label>
+          <input class="form-control" name="meta_title" maxlength="255" value="<%= isEdit ? (data.page.meta_title || '') : '' %>" />
+        </div>
+        <div>
+          <label class="form-label">Meta-Beschreibung</label>
+          <textarea class="form-control" rows="3" name="meta_description" maxlength="500"><%= isEdit ? (data.page.meta_description || '') : '' %></textarea>
+        </div>
+        <div>
+          <label class="form-label">Robots</label>
+          <select class="form-select" name="robots">
+            <% const robotsVal = isEdit ? (data.page.robots || 'index,follow') : 'index,follow'; %>
+            <option value="index,follow" <%= robotsVal === 'index,follow' ? 'selected' : '' %>>index,follow</option>
+            <option value="noindex,follow" <%= robotsVal === 'noindex,follow' ? 'selected' : '' %>>noindex,follow</option>
+            <option value="noindex,nofollow" <%= robotsVal === 'noindex,nofollow' ? 'selected' : '' %>>noindex,nofollow</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-label">Fokus-Keyword (optional)</label>
+          <input class="form-control" name="focus_keyword" value="<%= isEdit ? (data.page.focus_keyword || '') : '' %>" />
+        </div>
+      </div>
+    </div>
+
+    <div class="d-grid gap-2">
+      <button class="btn btn-dark" type="submit"><%= isEdit ? 'Speichern' : 'Seite anlegen' %></button>
+    </div>
+  </div>
+</form>
+
+<%- include('./seo-ckeditor-script') %>

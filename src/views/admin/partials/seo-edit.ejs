@@ -14,9 +14,22 @@
             <input class="form-control" name="title" value="<%= data.page.title %>" required />
           </div>
           <div class="col-md-6">
-            <label class="form-label">Slug</label>
+            <label class="form-label">Slug (URL, z. B. <code>agb</code> → <code>/agb</code>)</label>
             <input class="form-control" name="slug" value="<%= data.page.slug %>" required />
           </div>
+        </div>
+
+        <div class="form-check form-switch">
+          <input
+            class="form-check-input"
+            type="checkbox"
+            name="is_public_route"
+            value="1"
+            id="is_public_route"
+            <%= Number(data.page.is_public_route) ? 'checked' : '' %>
+          />
+          <label class="form-check-label" for="is_public_route">Öffentliche Seite im Shop unter dieser URL</label>
+          <div class="form-text">Wenn aktiv, ist der Inhalt unter <code>/<%= data.page.slug || 'slug' %></code> erreichbar. Der Slug darf nicht mit einer <strong>Kategorie-URL</strong> kollidieren (Kategorien haben Vorrang). Interne Einträge wie <code>store-home</code> ohne Häkchen lassen.</div>
         </div>
 
         <div>

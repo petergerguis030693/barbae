@@ -1,0 +1,47 @@
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <p class="text-muted small mb-0">
+    Hier verwaltest du Textseiten wie <strong>AGB</strong>, <strong>Impressum</strong>, <strong>Datenschutz</strong>. Sie erscheinen im Shop unter
+    <code>/dein-slug</code> (ohne führenden Slash im Feld „Slug“).
+  </p>
+  <a class="btn btn-dark" href="/admin/pages/new">Neue Seite</a>
+</div>
+
+<div class="card">
+  <div class="card-header">Inhaltsseiten</div>
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Titel</th>
+          <th>Slug</th>
+          <th>Im Shop</th>
+          <th class="text-end">Aktion</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% if (!data.pages.length) { %>
+          <tr>
+            <td colspan="4" class="text-center text-muted py-4">Noch keine Seiten. „Neue Seite“ anlegen oder unter <a href="/admin/seo">SEO Texte</a> bestehende Einträge prüfen.</td>
+          </tr>
+        <% } %>
+        <% data.pages.forEach((page) => { %>
+          <tr>
+            <td><strong><%= page.title %></strong></td>
+            <td><code><%= page.slug %></code></td>
+            <td>
+              <a href="/<%= page.slug %>" target="_blank" rel="noopener">/<%= page.slug %></a>
+            </td>
+            <td class="text-end">
+              <div class="d-inline-flex gap-2">
+                <a class="btn btn-sm btn-outline-primary" href="/admin/pages/<%= page.id %>/edit">Bearbeiten</a>
+                <form method="post" action="/admin/pages/<%= page.id %>/delete" onsubmit="return confirm('Diese Seite wirklich löschen?')">
+                  <button type="submit" class="btn btn-sm btn-outline-danger">Löschen</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </div>
+</div>

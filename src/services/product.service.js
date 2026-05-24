@@ -1,6 +1,7 @@
 const { query } = require('../config/db');
 
 let hasProductOptionColumns = null;
+let hasFocusKeywordTextColumn = null;
 
 async function ensureProductOptionColumns() {
   if (hasProductOptionColumns === true) {
@@ -24,6 +25,25 @@ async function ensureProductOptionColumns() {
   }
 
   hasProductOptionColumns = true;
+}
+
+async function ensureProductFocusKeywordColumn() {
+  if (hasFocusKeywordTextColumn === true) {
+    return;
+  }
+
+  const rows = await query("SHOW COLUMNS FROM products LIKE 'focus_keyword'");
+  if (!rows.length) {
+    hasFocusKeywordTextColumn = true;
+    return;
+  }
+
+  const columnType = String(rows[0].Type || '').toLowerCase();
+  if (columnType !== 'text') {
+    await query('ALTER TABLE products MODIFY COLUMN focus_keyword TEXT NULL');
+  }
+
+  hasFocusKeywordTextColumn = true;
 }
 
 async function listProducts() {
@@ -104,6 +124,7 @@ async function listProductGallery(productId) {
 
 async function createProduct(payload) {
   await ensureProductOptionColumns();
+  await ensureProductFocusKeywordColumn();
   const {
     category_id,
     title,
@@ -165,6 +186,7 @@ async function createProduct(payload) {
 
 async function updateProduct(id, payload) {
   await ensureProductOptionColumns();
+  await ensureProductFocusKeywordColumn();
   const {
     category_id,
     title,

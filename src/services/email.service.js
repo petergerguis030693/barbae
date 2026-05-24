@@ -53,6 +53,7 @@ async function sendCustomerMail(payload) {
   const subject = String(payload?.subject || '').trim() || 'Nachricht von BarBae';
   const text = String(payload?.text || '').trim();
   const html = payload?.html ? String(payload.html) : null;
+  const replyTo = payload?.replyTo ? String(payload.replyTo).trim() : null;
   const relatedType = payload?.related_type || 'customer-message';
   const relatedId = payload?.related_id || null;
 
@@ -62,13 +63,14 @@ async function sendCustomerMail(payload) {
   }
 
   try {
-    console.log(`[MAIL] sendCustomerMail -> to=${to} subject="${subject}" from="${fromAddress}"`);
+    console.log(`[MAIL] sendCustomerMail -> to=${to} subject="${subject}" from="${fromAddress}"${replyTo ? ` replyTo="${replyTo}"` : ''}`);
     const info = await mailer.sendMail({
       from: fromAddress,
       to,
       subject,
       text: text || subject,
-      html: html || undefined
+      html: html || undefined,
+      replyTo: replyTo || undefined
     });
     console.log(`[MAIL] sendCustomerMail success -> to=${to} messageId=${info.messageId || 'jsonTransport'}`);
     await logEmail({ recipient: to, subject, status: 'sent', provider_message: info.messageId || 'ok', related_type: relatedType, related_id: relatedId });

@@ -10,13 +10,17 @@ async function ensureCategoryColumns() {
   const requiredColumns = [
     { name: 'image_path', ddl: 'ALTER TABLE categories ADD COLUMN image_path VARCHAR(255) NULL AFTER slug' },
     { name: 'description', ddl: 'ALTER TABLE categories ADD COLUMN description TEXT NULL AFTER image_path' },
-    { name: 'seo_text', ddl: 'ALTER TABLE categories ADD COLUMN seo_text MEDIUMTEXT NULL AFTER description' }
+    { name: 'seo_text', ddl: 'ALTER TABLE categories ADD COLUMN seo_text MEDIUMTEXT NULL AFTER description' },
+    { name: 'is_coming_soon', ddl: 'ALTER TABLE categories ADD COLUMN is_coming_soon TINYINT(1) NOT NULL DEFAULT 0 AFTER seo_text' }
   ];
 
   for (const column of requiredColumns) {
     const rows = await query(`SHOW COLUMNS FROM categories LIKE '${column.name}'`);
     if (!rows.length) {
       await query(column.ddl);
+      if (column.name === 'is_coming_soon') {
+        await query("UPDATE categories SET is_coming_soon = 1 WHERE LOWER(name) = 'beauty'");
+      }
     }
   }
 
@@ -26,11 +30,16 @@ async function ensureCategoryColumns() {
 async function listCategories() {
   await ensureCategoryColumns();
   return query(
-    `SELECT c.id, c.name, c.slug, c.image_path, c.description, c.seo_text, c.parent_id, p.name AS parent_name, c.created_at
+    `SELECT c.id, c.name, c.slug, c.image_path, c.description, c.seo_text, c.is_coming_soon, c.parent_id, p.name AS parent_name, c.created_at
      FROM categories c
      LEFT JOIN categories p ON p.id = c.parent_id
      ORDER BY c.name ASC`
   );
+}
+
+async function setCategoryComingSoon(id, isComingSoon) {
+  await ensureCategoryColumns();
+  await query('UPDATE categories SET is_coming_soon = ? WHERE id = ?', [isComingSoon ? 1 : 0, id]);
 }
 
 async function createCategory(payload) {
@@ -88,4 +97,4 @@ async function deleteCategory(id) {
   await query('DELETE FROM categories WHERE id = ?', [id]);
 }
 
-module.exports = { listCategories, createCategory, updateCategory, deleteCategory };
+module.exports = { listCategories, createCategory, updateCategory, deleteCategory, setCategoryComingSoon };

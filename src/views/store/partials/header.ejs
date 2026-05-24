@@ -3,7 +3,11 @@
   <div class="header-main">
     <nav class="header-main-links">
       <% menuMainCategories.forEach((category) => { %>
-        <a href="<%= category.url %>"><%= category.name %></a>
+        <% if (Number(category.is_coming_soon) === 1) { %>
+          <span class="header-main-link-disabled" aria-disabled="true"><%= category.name %></span>
+        <% } else { %>
+          <a href="<%= category.url %>"><%= category.name %></a>
+        <% } %>
       <% }) %>
     </nav>
 
@@ -31,6 +35,7 @@
   <%
     const subnavGroupsMap = new Map();
     const parentSortOrder = new Map((menuMainCategories || []).map((category, index) => [String(category.id), index]));
+    const parentComingSoonById = new Map((menuMainCategories || []).map((category) => [String(category.id), Number(category.is_coming_soon) === 1]));
     (menuSubcategories || []).forEach((subcategory, index) => {
       const parentKey = String(subcategory.parent_id || '');
       if (!subnavGroupsMap.has(parentKey)) {
@@ -38,12 +43,14 @@
       }
       subnavGroupsMap.get(parentKey).items.push(subcategory);
     });
-    const subnavGroups = Array.from(subnavGroupsMap.values()).sort((a, b) => {
-      const aOrder = parentSortOrder.has(a.parentKey) ? parentSortOrder.get(a.parentKey) : Number.MAX_SAFE_INTEGER;
-      const bOrder = parentSortOrder.has(b.parentKey) ? parentSortOrder.get(b.parentKey) : Number.MAX_SAFE_INTEGER;
-      if (aOrder !== bOrder) return aOrder - bOrder;
-      return a.index - b.index;
-    });
+    const subnavGroups = Array.from(subnavGroupsMap.values())
+      .filter((group) => !parentComingSoonById.get(group.parentKey))
+      .sort((a, b) => {
+        const aOrder = parentSortOrder.has(a.parentKey) ? parentSortOrder.get(a.parentKey) : Number.MAX_SAFE_INTEGER;
+        const bOrder = parentSortOrder.has(b.parentKey) ? parentSortOrder.get(b.parentKey) : Number.MAX_SAFE_INTEGER;
+        if (aOrder !== bOrder) return aOrder - bOrder;
+        return a.index - b.index;
+      });
   %>
   <div class="header-subnav">
     <% subnavGroups.forEach((group, groupIndex) => { %>

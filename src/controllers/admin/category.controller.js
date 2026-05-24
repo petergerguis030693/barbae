@@ -64,4 +64,15 @@ async function remove(req, res) {
   res.redirect('/admin/categories');
 }
 
-module.exports = { index, create, update, createSubcategory, remove };
+async function toggleComingSoon(req, res) {
+  const desired = req.body && typeof req.body.value !== 'undefined'
+    ? Number(req.body.value) === 1
+    : null;
+  const categories = await categoryService.listCategories();
+  const current = categories.find((item) => Number(item.id) === Number(req.params.id));
+  const nextValue = desired === null ? Number(current?.is_coming_soon) !== 1 : desired;
+  await categoryService.setCategoryComingSoon(req.params.id, nextValue);
+  res.redirect('/admin/categories');
+}
+
+module.exports = { index, create, update, createSubcategory, remove, toggleComingSoon };

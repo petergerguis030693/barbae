@@ -20,6 +20,21 @@ function sanitizeUrl(url) {
   return '';
 }
 
+/** URL-Pfad ohne führende/abschließende Slashes (z. B. "agb", nicht "/agb") */
+function normalizeSlug(value) {
+  return String(value || '')
+    .trim()
+    .replace(/^\/+/g, '')
+    .replace(/\/+$/g, '')
+    .toLowerCase();
+}
+
+function slugLookupVariants(slug) {
+  const clean = normalizeSlug(slug);
+  if (!clean) return [];
+  return Array.from(new Set([clean, `/${clean}`]));
+}
+
 function sanitizeSeoHtml(input) {
   const raw = String(input || '').trim();
   if (!raw) return null;
@@ -40,7 +55,47 @@ function sanitizeSeoHtml(input) {
   html = html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '');
   html = html.replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
 
-  const allowed = new Set(['p', 'br', 'strong', 'b', 'em', 'i', 'ul', 'ol', 'li', 'h3', 'h4', 'a']);
+  html = html.replace(/<img\b[^>]*>/gi, (full) => {
+    const srcMatch = full.match(/src\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i);
+    const altMatch = full.match(/alt\s*=\s*("([^"]*)"|'([^']*)')/i);
+    let src = srcMatch ? srcMatch[2] || srcMatch[3] || srcMatch[4] : '';
+    src = String(src || '').trim();
+    if (!/^(\/|https?:\/\/)/i.test(src)) return '';
+    const alt = altMatch ? altMatch[2] || altMatch[3] : '';
+    return `<img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" />`;
+  });
+
+  const allowed = new Set([
+    'p',
+    'br',
+    'hr',
+    'strong',
+    'b',
+    'em',
+    'i',
+    'u',
+    'ul',
+    'ol',
+    'li',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6',
+    'blockquote',
+    'a',
+    'table',
+    'thead',
+    'tbody',
+    'tr',
+    'th',
+    'td',
+    'figure',
+    'figcaption',
+    'div',
+    'span'
+  ]);
 
   html = html.replace(/<a\b([^>]*)>/gi, (_m, attrs) => {
     const hrefMatch = String(attrs || '').match(/href\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i);
@@ -59,11 +114,11 @@ function sanitizeSeoHtml(input) {
     const name = String(match[2] || '').toLowerCase();
     if (!allowed.has(name)) return '';
     if (name === 'br') return '<br>';
+    if (name === 'hr') return '<hr>';
     if (name === 'a') return tag.startsWith('</') ? '</a>' : tag;
     return closing ? `</${name}>` : `<${name}>`;
   });
 
-  // Remove any remaining inline event handlers or suspicious protocols if they slipped through.
   html = html.replace(/\son[a-z]+\s*=\s*(".*?"|'.*?'|[^\s>]+)/gi, '');
   html = html.replace(/javascript:/gi, '');
 
@@ -71,8 +126,12 @@ function sanitizeSeoHtml(input) {
 }
 
 function normalizeSeoPayload(payload = {}) {
+  const isPublic =
+    payload.is_public_route === true || payload.is_public_route === '1' || Number(payload.is_public_route) === 1;
   return {
     ...payload,
+    slug: normalizeSlug(payload.slug),
+    is_public_route: isPublic ? 1 : 0,
     seo_text: sanitizeSeoHtml(payload.seo_text)
   };
 }
@@ -163,6 +222,19 @@ async function ensureSeoTableAndDefaults() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`
   );
 
+  try {
+    await query('ALTER TABLE seo_pages ADD COLUMN is_public_route TINYINT(1) NOT NULL DEFAULT 0');
+  } catch (err) {
+    const msg = String(err && err.message ? err.message : err);
+    if (!/Duplicate column name/i.test(msg)) throw err;
+  }
+
+  try {
+    await query(`UPDATE seo_pages SET slug = TRIM(LEADING '/' FROM slug) WHERE slug LIKE '/%'`);
+  } catch (_err) {
+    // ignore
+  }
+
   for (const page of DEFAULT_SEO_PAGES) {
     const rows = await query('SELECT id FROM seo_pages WHERE slug = ? LIMIT 1', [page.slug]);
     if (!rows.length) {
@@ -217,8 +289,29 @@ async function getSeoPageById(id) {
 
 async function getSeoPageBySlug(slug) {
   await ensureSeoTableAndDefaults();
-  const rows = await query('SELECT * FROM seo_pages WHERE slug = ? LIMIT 1', [String(slug || '')]);
+  const variants = slugLookupVariants(slug);
+  if (!variants.length) return null;
+  const placeholders = variants.map(() => '?').join(', ');
+  const rows = await query(`SELECT * FROM seo_pages WHERE slug IN (${placeholders}) LIMIT 1`, variants);
   return rows[0] || null;
+}
+
+async function getPublicCmsPageBySlug(slug) {
+  await ensureSeoTableAndDefaults();
+  const variants = slugLookupVariants(slug);
+  if (!variants.length) return null;
+  const placeholders = variants.map(() => '?').join(', ');
+  // Shop-Systemseiten (store-*) nie unter /slug ausliefern; echte Inhaltsseiten (agb, impressum, …) schon.
+  const rows = await query(
+    `SELECT * FROM seo_pages WHERE slug IN (${placeholders}) AND slug NOT LIKE 'store-%' LIMIT 1`,
+    variants
+  );
+  return rows[0] || null;
+}
+
+async function listContentPages() {
+  await ensureSeoTableAndDefaults();
+  return query(`SELECT * FROM seo_pages WHERE slug NOT LIKE 'store-%' ORDER BY title ASC`);
 }
 
 async function createSeoPage(payload) {
@@ -235,14 +328,15 @@ async function createSeoPage(payload) {
     og_description,
     canonical_url,
     robots,
-    json_ld
+    json_ld,
+    is_public_route
   } = normalized;
 
   await query(
     `INSERT INTO seo_pages (
       title, slug, meta_title, meta_description, seo_text, focus_keyword,
-      og_title, og_description, canonical_url, robots, json_ld
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      og_title, og_description, canonical_url, robots, json_ld, is_public_route
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       title,
       slug,
@@ -254,7 +348,8 @@ async function createSeoPage(payload) {
       og_description || null,
       canonical_url || null,
       robots || 'index,follow',
-      json_ld || null
+      json_ld || null,
+      Number(is_public_route) === 1 ? 1 : 0
     ]
   );
 }
@@ -273,13 +368,14 @@ async function updateSeoPage(id, payload) {
     og_description,
     canonical_url,
     robots,
-    json_ld
+    json_ld,
+    is_public_route
   } = normalized;
 
   await query(
     `UPDATE seo_pages
      SET title = ?, slug = ?, meta_title = ?, meta_description = ?, seo_text = ?, focus_keyword = ?,
-         og_title = ?, og_description = ?, canonical_url = ?, robots = ?, json_ld = ?, updated_at = NOW()
+         og_title = ?, og_description = ?, canonical_url = ?, robots = ?, json_ld = ?, is_public_route = ?, updated_at = NOW()
      WHERE id = ?`,
     [
       title,
@@ -293,6 +389,7 @@ async function updateSeoPage(id, payload) {
       canonical_url || null,
       robots || 'index,follow',
       json_ld || null,
+      Number(is_public_route) === 1 ? 1 : 0,
       id
     ]
   );
@@ -305,8 +402,10 @@ async function deleteSeoPage(id) {
 
 module.exports = {
   listSeoPages,
+  listContentPages,
   getSeoPageById,
   getSeoPageBySlug,
+  getPublicCmsPageBySlug,
   createSeoPage,
   updateSeoPage,
   deleteSeoPage

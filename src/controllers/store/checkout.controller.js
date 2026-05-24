@@ -33,6 +33,11 @@ const { sendCustomerMail } = require('../../services/email.service');
 const { sendInvoiceMail } = require('../../services/email.service');
 const { sendOrderConfirmationMail } = require('../../services/email.service');
 const { validateCouponForCheckout, markCouponUsed } = require('../../services/coupon.service');
+const {
+  getOrCreateRegisterCaptcha,
+  validateRegisterCaptcha,
+  clearRegisterCaptcha
+} = require('../../services/store-captcha.service');
 const Stripe = require('stripe');
 
 function buildSeoBottomFromPage(page, fallback = {}) {
@@ -259,6 +264,12 @@ async function renderCheckout(req, res) {
   const error = req.session.checkoutError || '';
   req.session.checkoutError = '';
 
+  const registerCaptcha = customerUser ? null : getOrCreateRegisterCaptcha(req);
+  const registerForm = customerUser ? null : (req.session.registerFormPrefill || null);
+  if (req.session.registerFormPrefill) {
+    delete req.session.registerFormPrefill;
+  }
+
   return res.render('store/checkout', {
     title: 'Checkout | BarBae',
     query: '',
@@ -270,6 +281,8 @@ async function renderCheckout(req, res) {
     customerUser,
     draft,
     error,
+    registerCaptcha,
+    registerForm,
     seoBottom: buildSeoBottomFromPage(seoPage),
     seoMeta: buildSeoMeta(req, seoPage, {
       title: 'Checkout | BarBae',
@@ -289,6 +302,12 @@ async function renderAccount(req, res) {
   req.session.accountAuthError = '';
   req.session.accountAuthSuccess = '';
   req.session.accountVerifyInfo = '';
+
+  const registerCaptcha = customerUser ? null : getOrCreateRegisterCaptcha(req);
+  const registerForm = customerUser ? null : (req.session.registerFormPrefill || null);
+  if (req.session.registerFormPrefill) {
+    delete req.session.registerFormPrefill;
+  }
 
   const tab = String(req.query.tab || (customerUser ? 'overview' : 'login')).toLowerCase();
   let profile = null;
@@ -334,6 +353,8 @@ async function renderAccount(req, res) {
     error,
     success,
     verifyInfo,
+    registerCaptcha,
+    registerForm,
     seoBottom: buildSeoBottomFromPage(seoPage),
     seoMeta: buildSeoMeta(req, seoPage, {
       title: 'Konto | BarBae',
@@ -627,35 +648,129 @@ async function logoutAccount(req, res) {
   return res.redirect('/account');
 }
 
-async function registerCheckoutCustomer(req, res) {
-  try {
-    const payload = buildDraftFromBody(req.body);
-    payload.password = String(req.body.password || '');
-    const customer = await registerCustomer(payload);
-    await sendVerificationMail(req, customer);
-    req.session.checkoutDraft = payload;
-    req.session.checkoutError = 'Konto erstellt. Bitte E-Mail bestätigen und danach einloggen.';
-    return res.redirect('/checkout');
-  } catch (_error) {
-    req.session.checkoutError = 'Registrierung fehlgeschlagen.';
-    return res.redirect('/checkout');
+function captchaErrorMessage(reason) {
+  switch (reason) {
+    case 'honeypot':
+      return 'Sicherheitsprüfung fehlgeschlagen.';
+    case 'too-fast':
+      return 'Bitte fülle das Formular vollständig aus und versuche es erneut.';
+    case 'expired':
+      return 'Die Sicherheitsfrage ist abgelaufen. Bitte versuche es erneut.';
+    case 'wrong':
+    case 'invalid':
+      return 'Die Sicherheitsfrage wurde nicht richtig beantwortet.';
+    default:
+      return 'Sicherheitsprüfung fehlgeschlagen.';
   }
 }
 
-async function registerAccount(req, res) {
+function registerErrorMessage(code) {
+  switch (code) {
+    case 'missing-first-name':
+      return 'Bitte gib deinen Vornamen an.';
+    case 'missing-last-name':
+      return 'Bitte gib deinen Nachnamen an.';
+    case 'missing-email':
+      return 'Bitte gib eine E-Mail-Adresse an.';
+    case 'invalid-email':
+      return 'Diese E-Mail-Adresse ist ungültig. Bitte überprüfe die Schreibweise.';
+    case 'missing-password':
+      return 'Bitte gib ein Passwort an.';
+    case 'password-too-short':
+      return 'Das Passwort muss mindestens 8 Zeichen lang sein.';
+    case 'email-exists':
+      return 'Für diese E-Mail-Adresse existiert bereits ein Konto. Bitte melde dich an oder setze dein Passwort über „Passwort vergessen" zurück.';
+    case 'missing-fields':
+      return 'Bitte fülle alle Pflichtfelder aus.';
+    default:
+      return 'Registrierung fehlgeschlagen. Bitte versuche es noch einmal.';
+  }
+}
+
+function buildRegisterFormSnapshot(body) {
+  return {
+    first_name: String(body.first_name || '').trim(),
+    last_name: String(body.last_name || '').trim(),
+    email: String(body.email || '').trim(),
+    phone: String(body.phone || '').trim()
+  };
+}
+
+async function registerCheckoutCustomer(req, res) {
+  req.session.registerFormPrefill = buildRegisterFormSnapshot(req.body || {});
+
+  const captchaResult = validateRegisterCaptcha(req, req.body || {});
+  if (!captchaResult.ok) {
+    clearRegisterCaptcha(req);
+    req.session.checkoutError = captchaErrorMessage(captchaResult.reason);
+    return res.redirect('/checkout');
+  }
+
+  let customer;
   try {
     const payload = buildDraftFromBody(req.body);
     payload.password = String(req.body.password || '');
-    const customer = await registerCustomer(payload);
+    customer = await registerCustomer(payload);
+    req.session.checkoutDraft = payload;
+  } catch (error) {
+    clearRegisterCaptcha(req);
+    console.log('[REGISTER] checkout register failed:', error?.message);
+    req.session.checkoutError = registerErrorMessage(error?.message);
+    return res.redirect('/checkout');
+  }
+
+  clearRegisterCaptcha(req);
+  delete req.session.registerFormPrefill;
+
+  try {
     await sendVerificationMail(req, customer);
-    req.session.accountAuthError = '';
-    req.session.accountAuthSuccess = 'Konto erstellt. Bitte bestätige deine E-Mail (Link wurde gesendet).';
-    return res.redirect('/account');
-  } catch (_error) {
-    req.session.accountAuthError = 'Registrierung fehlgeschlagen.';
+    req.session.checkoutError = 'Konto erstellt. Bitte bestätige deine E-Mail-Adresse über den Link, den wir dir gerade gesendet haben.';
+  } catch (error) {
+    console.log('[REGISTER] verification mail failed:', error?.message);
+    req.session.checkoutError = 'Konto erstellt, aber die Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte versuche es später über „Bestätigungs-Mail senden" erneut.';
+  }
+
+  return res.redirect('/checkout');
+}
+
+async function registerAccount(req, res) {
+  req.session.registerFormPrefill = buildRegisterFormSnapshot(req.body || {});
+
+  const captchaResult = validateRegisterCaptcha(req, req.body || {});
+  if (!captchaResult.ok) {
+    clearRegisterCaptcha(req);
+    req.session.accountAuthError = captchaErrorMessage(captchaResult.reason);
     req.session.accountAuthSuccess = '';
     return res.redirect('/account');
   }
+
+  let customer;
+  try {
+    const payload = buildDraftFromBody(req.body);
+    payload.password = String(req.body.password || '');
+    customer = await registerCustomer(payload);
+  } catch (error) {
+    clearRegisterCaptcha(req);
+    console.log('[REGISTER] account register failed:', error?.message);
+    req.session.accountAuthError = registerErrorMessage(error?.message);
+    req.session.accountAuthSuccess = '';
+    return res.redirect('/account');
+  }
+
+  clearRegisterCaptcha(req);
+  delete req.session.registerFormPrefill;
+  req.session.accountAuthError = '';
+
+  try {
+    await sendVerificationMail(req, customer);
+    req.session.accountAuthSuccess = 'Konto erstellt. Bitte bestätige deine E-Mail-Adresse über den Link, den wir dir gerade gesendet haben.';
+  } catch (error) {
+    console.log('[REGISTER] verification mail failed:', error?.message);
+    req.session.accountAuthSuccess = '';
+    req.session.accountAuthError = 'Konto erstellt, aber die Bestätigungs-E-Mail konnte nicht gesendet werden. Bitte fordere unten erneut eine Bestätigungs-Mail an.';
+  }
+
+  return res.redirect('/account');
 }
 
 async function placeOrder(req, res) {

@@ -1,7 +1,7 @@
 const { listCategories } = require('../../services/category.service');
 const { listProducts, getProductDetailByRef, listProductGallery } = require('../../services/product.service');
 const { listSettings } = require('../../services/settings.service');
-const { getSeoPageBySlug } = require('../../services/seo.service');
+const { getSeoPageBySlug, getPublicCmsPageBySlug } = require('../../services/seo.service');
 const { listPublishedBlogPosts, listAllPublishedBlogPosts, getBlogPostBySlug } = require('../../services/blog.service');
 
 function toPublicPath(value) {
@@ -374,12 +374,44 @@ async function renderMagazineArticle(req, res) {
   });
 }
 
+async function renderPublicCmsPage(req, res, state, page) {
+  const slugClean = cleanSlug(page.slug);
+  const html = String(page.seo_text || '').trim();
+  const contentHtml = formatSeoTextHtml(html);
+  const heading = String(page.title || '').trim();
+  return res.render('store/cms-page', {
+    title: String(page.meta_title || heading || 'BarBae').trim(),
+    query: '',
+    menuMainCategories: state.menuMainCategories,
+    menuSubcategories: state.menuSubcategories,
+    searchItems: state.searchItems,
+    pageHeading: heading,
+    contentHtml,
+    seoMeta: buildSeoMeta(req, page, {
+      title: String(page.meta_title || heading || 'BarBae').trim(),
+      meta_description:
+        String(page.meta_description || '').trim() || firstTextParagraph(html.replace(/<[^>]+>/g, ' '), 180),
+      canonical_url: `${buildBaseUrl(req)}/${encodeURIComponent(slugClean)}`,
+      robots: String(page.robots || 'index,follow')
+    })
+  });
+}
+
 async function renderCategoryByPath(req, res) {
   const state = await loadStoreData();
   const mainSlug = req.params.mainSlug;
   const subSlug = req.params.subSlug;
 
   const mainCategory = findMainCategory(state.categories, mainSlug);
+
+  if (!mainCategory && !subSlug) {
+    const cmsPage = await getPublicCmsPageBySlug(mainSlug);
+    if (cmsPage) {
+      return renderPublicCmsPage(req, res, state, cmsPage);
+    }
+    return res.status(404).send('Seite nicht gefunden.');
+  }
+
   if (!mainCategory) {
     return res.status(404).send('Kategorie nicht gefunden.');
   }
@@ -522,4 +554,15 @@ function heroCategoryImageForSeo(mainCategory, selectedCategory) {
   return selectedCategory?.imageUrl || mainCategory?.imageUrl || '';
 }
 
-module.exports = { renderHome, renderCategoryByPath, renderProduct, renderMagazineIndex, renderMagazineArticle };
+module.exports = {
+  renderHome,
+  renderCategoryByPath,
+  renderProduct,
+  renderMagazineIndex,
+  renderMagazineArticle,
+  loadStoreData,
+  buildSeoMeta,
+  buildBaseUrl,
+  buildSeoBottomFromPage,
+  firstTextParagraph
+};

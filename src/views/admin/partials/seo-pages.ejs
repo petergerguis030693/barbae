@@ -10,6 +10,7 @@
         <tr>
           <th>Seite</th>
           <th>Slug</th>
+          <th>Shop-URL</th>
           <th>Meta Titel</th>
           <th>Meta Beschreibung</th>
           <th class="text-end">Aktion</th>
@@ -17,12 +18,19 @@
       </thead>
       <tbody>
         <% if (!data.pages.length) { %>
-          <tr><td colspan="5" class="text-center text-muted py-4">Keine SEO Seiten vorhanden.</td></tr>
+          <tr><td colspan="6" class="text-center text-muted py-4">Keine SEO Seiten vorhanden.</td></tr>
         <% } %>
         <% data.pages.forEach((page) => { %>
           <tr>
             <td><strong><%= page.title %></strong></td>
-            <td><code>/<%= page.slug %></code></td>
+            <td><code><%= page.slug %></code></td>
+            <td>
+              <% if (Number(page.is_public_route)) { %>
+                <a href="/<%= page.slug %>" target="_blank" rel="noopener">/<%= page.slug %></a>
+              <% } else { %>
+                <span class="text-muted">—</span>
+              <% } %>
+            </td>
             <td><%= page.meta_title || '-' %></td>
             <td><%= page.meta_description || '-' %></td>
             <td class="text-end">

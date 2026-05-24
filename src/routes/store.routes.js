@@ -8,12 +8,15 @@ const {
 } = require('../controllers/store/home.controller');
 const checkoutController = require('../controllers/store/checkout.controller');
 const cartController = require('../controllers/store/cart.controller');
+const contactController = require('../controllers/store/contact.controller');
 
 const router = express.Router();
 
 router.get('/', renderHome);
 router.get('/magazin', renderMagazineIndex);
 router.get('/magazin/:slug', renderMagazineArticle);
+router.get('/kontakt', contactController.renderContact);
+router.post('/kontakt', contactController.submitContact);
 router.get('/product/:ref', renderProduct);
 router.get('/api/cart', cartController.getCart);
 router.post('/api/cart/sync', cartController.syncCart);

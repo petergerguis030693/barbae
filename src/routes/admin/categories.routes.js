@@ -26,5 +26,6 @@ router.post('/categories/create', upload.single('image'), controller.create);
 router.post('/categories/:id/update', upload.single('image'), controller.update);
 router.post('/categories/:id/subcategories/create', upload.single('image'), controller.createSubcategory);
 router.post('/categories/:id/delete', controller.remove);
+router.post('/categories/:id/coming-soon', controller.toggleComingSoon);
 
 module.exports = router;
