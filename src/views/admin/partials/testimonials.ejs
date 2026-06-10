@@ -1,0 +1,95 @@
+<% if (data.flash && data.flash.error) { %>
+  <div class="alert alert-danger py-2"><%= data.flash.error %></div>
+<% } %>
+<% if (data.flash && data.flash.success) { %>
+  <div class="alert alert-success py-2"><%= data.flash.success %></div>
+<% } %>
+
+<div class="card mb-3">
+  <div class="card-header">Neue Bewertung anlegen</div>
+  <div class="card-body">
+    <form method="post" action="/admin/testimonials/create" class="row g-2">
+      <div class="col-md-4">
+        <label class="form-label">Name</label>
+        <input class="form-control" name="author_name" placeholder="z. B. Sophie M." required maxlength="190" />
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Sterne</label>
+        <select class="form-select" name="rating">
+          <% [5,4,3,2,1].forEach((value) => { %>
+            <option value="<%= value %>" <%= value === 5 ? 'selected' : '' %>><%= value %> ★</option>
+          <% }) %>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Sortierung</label>
+        <input class="form-control" type="number" min="0" step="1" name="sort_order" value="0" />
+      </div>
+      <div class="col-md-2 d-flex align-items-end">
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" name="is_active" id="new_is_active" checked />
+          <label class="form-check-label" for="new_is_active">Aktiv</label>
+        </div>
+      </div>
+      <div class="col-md-2 d-grid align-items-end">
+        <button class="btn btn-dark">+ Anlegen</button>
+      </div>
+      <div class="col-12">
+        <label class="form-label">Bewertungstext</label>
+        <textarea class="form-control" name="quote" rows="3" placeholder="Was hat die Kundin gesagt?" required></textarea>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <span>Vorhandene Bewertungen (<%= data.testimonials.length %>)</span>
+    <span class="small text-muted">Reihenfolge auf der Startseite folgt der Sortierungs-Zahl (kleiner = weiter vorne).</span>
+  </div>
+  <div class="card-body d-grid gap-3">
+    <% if (!data.testimonials.length) { %>
+      <div class="text-muted small">Noch keine Bewertungen vorhanden.</div>
+    <% } %>
+
+    <% data.testimonials.forEach((item) => { %>
+      <div class="border rounded p-3">
+        <form method="post" action="/admin/testimonials/<%= item.id %>/update" class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <label class="form-label small">Name</label>
+            <input class="form-control" name="author_name" value="<%= item.author_name %>" maxlength="190" required />
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small">Sterne</label>
+            <select class="form-select" name="rating">
+              <% [5,4,3,2,1].forEach((value) => { %>
+                <option value="<%= value %>" <%= Number(item.rating) === value ? 'selected' : '' %>><%= value %> ★</option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <label class="form-label small">Sortierung</label>
+            <input class="form-control" type="number" min="0" step="1" name="sort_order" value="<%= item.sort_order %>" />
+          </div>
+          <div class="col-md-2">
+            <div class="form-check form-switch mt-3">
+              <input class="form-check-input" type="checkbox" name="is_active" id="active_<%= item.id %>" <%= Number(item.is_active) ? 'checked' : '' %> />
+              <label class="form-check-label" for="active_<%= item.id %>">Aktiv</label>
+            </div>
+          </div>
+          <div class="col-md-2 d-grid">
+            <button class="btn btn-outline-dark btn-sm">Speichern</button>
+          </div>
+          <div class="col-12">
+            <label class="form-label small">Bewertungstext</label>
+            <textarea class="form-control" name="quote" rows="3" required><%= item.quote %></textarea>
+          </div>
+        </form>
+
+        <form method="post" action="/admin/testimonials/<%= item.id %>/delete" class="mt-2 text-end" onsubmit="return confirm('Bewertung wirklich löschen?')">
+          <button class="btn btn-sm btn-outline-danger">Löschen</button>
+        </form>
+      </div>
+    <% }) %>
+  </div>
+</div>

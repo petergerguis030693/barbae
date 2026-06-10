@@ -593,10 +593,16 @@
     button.addEventListener('click', function (event) {
       event.stopPropagation();
       const selectedOptions = isProductBuyboxButton(button) ? buildProductPageSelectedOptions() : {};
+      const basePrice = Number(button.dataset.productPrice || 0);
+      const surcharge = Number(appData.productPage?.personalizationPrice || 0);
+      const hasPersonalization = !!(selectedOptions && selectedOptions.personalization);
+      const finalPrice = isProductBuyboxButton(button) && hasPersonalization && surcharge > 0
+        ? (basePrice + surcharge).toFixed(2)
+        : button.dataset.productPrice;
       addToCart({
         productId: button.dataset.productId,
         title: button.dataset.productTitle,
-        price: button.dataset.productPrice,
+        price: finalPrice,
         image: button.dataset.productImage,
         weightGrams: button.dataset.productWeight,
         qty: isProductBuyboxButton(button) && qtyInput ? Number(qtyInput.value || 1) : 1,
@@ -778,13 +784,34 @@
     );
   }
 
+  let productPageRecalc = null;
   if (qtyInput && buyTotal) {
-    const unitPrice = Number(appData.productPage?.unitPrice || 0);
+    const baseUnitPrice = Number(appData.productPage?.unitPrice || 0);
+    const personalizationSurcharge = Number(appData.productPage?.personalizationPrice || 0);
+    const productUnitPriceEl = document.getElementById('productUnitPrice');
+    const baseUnitPriceLabel = productUnitPriceEl ? productUnitPriceEl.textContent : '';
+
+    const collectPersonalizationActive = function () {
+      const inputs = Array.from(document.querySelectorAll('.personalize-text-input'));
+      if (!inputs.length) return false;
+      return inputs.some((input) => String(input.value || '').trim());
+    };
+
     const recalc = function () {
       const qty = Math.max(1, Number(qtyInput.value || 1));
       qtyInput.value = String(qty);
-      buyTotal.textContent = money(unitPrice * qty);
+      const surcharge = personalizationSurcharge > 0 && collectPersonalizationActive()
+        ? personalizationSurcharge
+        : 0;
+      const effectiveUnit = baseUnitPrice + surcharge;
+      buyTotal.textContent = money(effectiveUnit * qty);
+      if (productUnitPriceEl) {
+        productUnitPriceEl.textContent = surcharge > 0
+          ? `${money(effectiveUnit)} (inkl. +${money(surcharge)} Personalisierung)`
+          : baseUnitPriceLabel;
+      }
     };
+    productPageRecalc = recalc;
     qtyMinus?.addEventListener('click', () => {
       qtyInput.value = String(Math.max(1, Number(qtyInput.value || 1) - 1));
       recalc();
@@ -835,43 +862,134 @@
   }
 
   const namedColors = {
-    schwarz: '#2a211b',
-    black: '#2a211b',
+    schwarz: '#1a1410',
+    black: '#1a1410',
     weiss: '#f7f4ef',
+    'weiß': '#f7f4ef',
     white: '#f7f4ef',
+    creme: '#f1e6d0',
+    cream: '#f1e6d0',
+    ivory: '#f1e6c8',
+    elfenbein: '#f1e6c8',
+    champagner: '#e6cf9e',
+    champagne: '#e6cf9e',
     gold: '#c9a24f',
+    rosegold: '#c9988a',
+    'rosé gold': '#c9988a',
     silber: '#c8c8c8',
     silver: '#c8c8c8',
-    rosa: '#c5a1aa',
-    rose: '#c5a1aa',
-    nude: '#d3c7b8',
+    grau: '#8a8783',
+    gray: '#8a8783',
+    grey: '#8a8783',
+    rot: '#a83232',
+    red: '#a83232',
+    weinrot: '#5e1622',
+    bordeaux: '#5e1622',
+    burgundy: '#5e1622',
+    rosa: '#dca9b3',
+    pink: '#e8a5b8',
+    rose: '#dca9b3',
+    'rosé': '#dca9b3',
+    altrosa: '#c5a1aa',
+    nude: '#e0c8b4',
     beige: '#d3c7b8',
+    sand: '#d8c4a3',
     braun: '#6d5142',
-    brown: '#6d5142'
+    brown: '#6d5142',
+    cognac: '#8a4a2a',
+    blau: '#2e4a78',
+    blue: '#2e4a78',
+    dunkelblau: '#1c2e4a',
+    navy: '#1c2e4a',
+    hellblau: '#9bc1d6',
+    'hell blau': '#9bc1d6',
+    türkis: '#3aa8a3',
+    tuerkis: '#3aa8a3',
+    teal: '#2e7d7a',
+    grün: '#3f6b3a',
+    gruen: '#3f6b3a',
+    green: '#3f6b3a',
+    olive: '#7a7740',
+    khaki: '#8a8455',
+    mint: '#a8d6b8',
+    gelb: '#e3c34a',
+    yellow: '#e3c34a',
+    orange: '#d8783a',
+    koralle: '#e07a6a',
+    coral: '#e07a6a',
+    lila: '#7a4a82',
+    violett: '#7a4a82',
+    purple: '#7a4a82',
+    flieder: '#b7a1c8',
+    lavender: '#b7a1c8',
+    petrol: '#1f4a55',
+    bronze: '#a87832'
   };
 
   const toColor = function (name) {
     const normalized = String(name || '').trim().toLowerCase();
     if (namedColors[normalized]) return namedColors[normalized];
-    let hash = 0;
-    for (let i = 0; i < normalized.length; i += 1) hash = normalized.charCodeAt(i) + ((hash << 5) - hash);
-    const c = (hash & 0x00ffffff).toString(16).toUpperCase();
-    return `#${'00000'.substring(0, 6 - c.length)}${c}`;
+    const stripped = normalized.replace(/\s+/g, '');
+    if (namedColors[stripped]) return namedColors[stripped];
+    return null;
+  };
+
+  const sizeStock = appData.productPage?.sizeStock || {};
+
+  const refreshQtyMaxFromSelection = function () {
+    if (!qtyInput) return;
+    const colorBtn = document.querySelector('.color-chip.active');
+    const sizeBtn = document.querySelector('.size-chip.active');
+    const colorName = colorBtn ? String(colorBtn.dataset.optionColor || '').trim() : '';
+    const sizeName = sizeBtn ? String(sizeBtn.dataset.optionSize || '').trim() : '';
+
+    const candidateStocks = [];
+    if (colorName && Object.prototype.hasOwnProperty.call(colorStock, colorName)) {
+      candidateStocks.push(Number(colorStock[colorName] || 0));
+    }
+    if (sizeName && Object.prototype.hasOwnProperty.call(sizeStock, sizeName)) {
+      candidateStocks.push(Number(sizeStock[sizeName] || 0));
+    }
+
+    if (!candidateStocks.length) {
+      qtyInput.removeAttribute('max');
+      qtyInput.dispatchEvent(new Event('input'));
+      return;
+    }
+
+    const limit = Math.max(0, Math.min.apply(null, candidateStocks));
+    if (limit > 0 && Number(qtyInput.value || 1) > limit) qtyInput.value = String(limit);
+    qtyInput.max = limit > 0 ? String(limit) : '';
+    qtyInput.dispatchEvent(new Event('input'));
   };
 
   colorChips.forEach((chip) => {
+    if (chip.disabled) return;
     const label = chip.dataset.optionColor || chip.textContent;
-    chip.style.background = toColor(label);
-    chip.style.color = 'transparent';
+    const swatch = chip.querySelector('.color-swatch');
+    const color = toColor(label);
+    if (swatch) {
+      if (color) {
+        swatch.style.background = color;
+        swatch.classList.remove('color-swatch-unknown');
+      } else {
+        swatch.style.background = '';
+        swatch.classList.add('color-swatch-unknown');
+      }
+    }
     chip.addEventListener('click', function () {
       activateChoice(colorChips, chip);
-      const stock = Number(colorStock[label] || 0);
-      if (qtyInput && stock > 0 && Number(qtyInput.value || 1) > stock) qtyInput.value = String(stock);
-      if (qtyInput) qtyInput.max = stock > 0 ? String(stock) : '';
-      qtyInput?.dispatchEvent(new Event('input'));
+      refreshQtyMaxFromSelection();
     });
   });
-  sizeChips.forEach((chip) => chip.addEventListener('click', () => activateChoice(sizeChips, chip)));
+  sizeChips.forEach((chip) => {
+    if (chip.disabled) return;
+    chip.addEventListener('click', () => {
+      activateChoice(sizeChips, chip);
+      refreshQtyMaxFromSelection();
+    });
+  });
+  refreshQtyMaxFromSelection();
   if (personalizeNoneBtn && personalizeTextInputs.length) {
     personalizeRoot?.classList.add('is-none-selected');
     personalizeNoneBtn.addEventListener('click', function () {
@@ -881,10 +999,49 @@
       personalizeNoneBtn.classList.add('active');
       personalizeNoneBtn.setAttribute('aria-pressed', 'true');
       personalizeRoot?.classList.add('is-none-selected');
+      if (typeof productPageRecalc === 'function') productPageRecalc();
     });
+    const letterPattern = /[^A-Za-z\u00C4\u00D6\u00DC\u00E4\u00F6\u00FC\u00DF\s]/g;
+    const sanitizePersonalizeInput = function (input) {
+      const lettersOnly = input.dataset.personalizeLettersOnly === '1';
+      const maxLen = Number(input.dataset.personalizeMaxlength || input.getAttribute('maxlength') || 200);
+      let value = String(input.value || '');
+      if (lettersOnly) {
+        value = value.replace(letterPattern, '');
+      }
+      if (Number.isFinite(maxLen) && maxLen > 0 && value.length > maxLen) {
+        value = value.slice(0, maxLen);
+      }
+      if (value !== input.value) {
+        const cursor = input.selectionStart;
+        input.value = value;
+        if (cursor != null) {
+          try { input.setSelectionRange(Math.min(cursor, value.length), Math.min(cursor, value.length)); } catch (_e) {}
+        }
+      }
+    };
+
     personalizeTextInputs.forEach((input) => {
       input.addEventListener('input', function () {
+        sanitizePersonalizeInput(input);
         syncPersonalizeNoneState();
+        if (typeof productPageRecalc === 'function') productPageRecalc();
+      });
+      input.addEventListener('paste', function (event) {
+        const lettersOnly = input.dataset.personalizeLettersOnly === '1';
+        if (!lettersOnly) return;
+        const clipboard = (event.clipboardData || window.clipboardData)?.getData('text');
+        if (clipboard == null) return;
+        event.preventDefault();
+        const maxLen = Number(input.dataset.personalizeMaxlength || input.getAttribute('maxlength') || 200);
+        const start = input.selectionStart || 0;
+        const end = input.selectionEnd || 0;
+        const cleaned = String(clipboard).replace(letterPattern, '');
+        const next = (input.value.slice(0, start) + cleaned + input.value.slice(end)).slice(0, maxLen);
+        input.value = next;
+        sanitizePersonalizeInput(input);
+        syncPersonalizeNoneState();
+        if (typeof productPageRecalc === 'function') productPageRecalc();
       });
       input.addEventListener('focus', function () {
         if (personalizeNoneBtn && personalizeNoneBtn.classList.contains('active')) {
@@ -893,6 +1050,7 @@
           personalizeRoot?.classList.remove('is-none-selected');
         }
       });
+      sanitizePersonalizeInput(input);
     });
   }
 

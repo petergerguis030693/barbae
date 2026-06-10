@@ -285,10 +285,12 @@ async function loadOptionSettings() {
 }
 
 async function renderHome(req, res) {
-  const [state, homeSeoPage, blogPreviewRows] = await Promise.all([
+  const { listActiveTestimonials } = require('../../services/testimonial.service');
+  const [state, homeSeoPage, blogPreviewRows, testimonialRows] = await Promise.all([
     loadStoreData(),
     getSeoPageBySlug('store-home'),
-    listPublishedBlogPosts(5)
+    listPublishedBlogPosts(5),
+    listActiveTestimonials(12).catch(() => [])
   ]);
   const query = String(req.query.q || '').trim();
   const normalizedQuery = query.toLowerCase();
@@ -312,6 +314,7 @@ async function renderHome(req, res) {
     categoriesWithImage: state.mainCategories,
     featuredProducts: mapProducts(filtered).slice(0, 12),
     magazinePosts: mapBlogPosts(blogPreviewRows),
+    homeTestimonials: testimonialRows,
     searchItems: state.searchItems,
     seoBottom: buildSeoBottomFromPage(homeSeoPage),
     seoMeta: buildSeoMeta(req, homeSeoPage, {
@@ -495,8 +498,27 @@ async function renderProduct(req, res) {
   const colorOptions = Number(product.has_color_options)
     ? (colorNamesFromProduct.length ? colorNamesFromProduct : options.colors)
     : [];
-  const sizeOptions = Number(product.has_size_options) ? options.sizes : [];
-  const personalizationOptions = Number(product.has_personalization_options) ? options.personalizations : [];
+  const sizeStock = parseColorStockJson(product.size_stock_json);
+  const sizeNamesFromProduct = Object.keys(sizeStock);
+  const sizeOptions = Number(product.has_size_options)
+    ? (sizeNamesFromProduct.length ? sizeNamesFromProduct : options.sizes)
+    : [];
+  const productPersonalizationFields = (() => {
+    if (!product.personalization_fields_json) return [];
+    try {
+      const parsed = JSON.parse(String(product.personalization_fields_json));
+      if (!Array.isArray(parsed)) return [];
+      return parsed.map((item) => String(item || '').trim()).filter(Boolean);
+    } catch (_error) {
+      return [];
+    }
+  })();
+  const allowedPersonalizationSet = new Set(productPersonalizationFields);
+  const personalizationOptions = Number(product.has_personalization_options)
+    ? (productPersonalizationFields.length
+        ? options.personalizations.filter((field) => allowedPersonalizationSet.has(field))
+        : options.personalizations)
+    : [];
 
   const category = state.categories.find((item) => Number(item.id) === Number(product.category_id)) || null;
   const parentCategory =
@@ -544,6 +566,7 @@ async function renderProduct(req, res) {
     colorOptions,
     colorStock,
     sizeOptions,
+    sizeStock,
     personalizationOptions,
     seoBottom: buildSeoBottomFromPage(null, productSeoFallback),
     seoMeta: productSeoMeta

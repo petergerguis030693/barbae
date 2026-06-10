@@ -12,6 +12,17 @@ CREATE TABLE IF NOT EXISTS admins (
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS testimonials (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  author_name VARCHAR(190) NOT NULL,
+  quote TEXT NOT NULL,
+  rating TINYINT NOT NULL DEFAULT 5,
+  is_active TINYINT(1) NOT NULL DEFAULT 1,
+  sort_order INT NOT NULL DEFAULT 0,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 CREATE TABLE IF NOT EXISTS categories (
   id INT AUTO_INCREMENT PRIMARY KEY,
   parent_id INT NULL,
@@ -32,11 +43,16 @@ CREATE TABLE IF NOT EXISTS products (
   description TEXT NULL,
   price DECIMAL(10,2) NOT NULL DEFAULT 0,
   stock INT NOT NULL DEFAULT 0,
+  stock_initial INT NOT NULL DEFAULT 0,
+  low_stock_alert_sent_at DATETIME NULL,
   has_color_options TINYINT(1) NOT NULL DEFAULT 0,
   has_size_options TINYINT(1) NOT NULL DEFAULT 0,
   color_stock_json TEXT NULL,
+  size_stock_json TEXT NULL,
   has_personalization_options TINYINT(1) NOT NULL DEFAULT 0,
   personalization_type ENUM('none','initials','name','date') NOT NULL DEFAULT 'none',
+  personalization_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+  personalization_fields_json TEXT NULL,
   featured_image VARCHAR(255) NULL,
   is_bestseller TINYINT(1) NOT NULL DEFAULT 0,
   seo_title VARCHAR(255) NULL,

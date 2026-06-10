@@ -133,4 +133,96 @@ async function sendOrderConfirmationMail(payload) {
   }
 }
 
-module.exports = { sendInvoiceMail, sendCustomerMail, sendOrderConfirmationMail };
+async function sendLowStockAlertMail(payload) {
+  const products = Array.isArray(payload?.products) ? payload.products : [];
+  if (!products.length) return null;
+
+  const recipient = String(payload?.recipient || 'shopping@barbae.at').trim() || 'shopping@barbae.at';
+  const fromAddress = process.env.MAIL_FROM || 'admin@localhost';
+  const subject =
+    products.length === 1
+      ? `Lagerwarnung: ${products[0].title} unter 20 %`
+      : `Lagerwarnung: ${products.length} Produkte unter 20 %`;
+
+  const esc = (value) =>
+    String(value ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+
+  const rows = products
+    .map(
+      (item) => `
+      <tr>
+        <td style="padding:8px 12px;border-bottom:1px solid #efe6d2;">${esc(item.title)}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #efe6d2;color:#7f7568;">${esc(item.sku || '-')}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #efe6d2;text-align:right;font-weight:600;">${esc(item.stock)} / ${esc(item.stockInitial)}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #efe6d2;text-align:right;color:#a05a2c;font-weight:600;">${esc(item.percent)} %</td>
+      </tr>`
+    )
+    .join('');
+
+  const plainLines = products.map(
+    (item) =>
+      `- ${item.title} (SKU ${item.sku || '-'}): ${item.stock}/${item.stockInitial} (${item.percent} %)`
+  );
+
+  const html = `
+    <div style="margin:0;padding:24px;background:#f5f1e8;font-family:Montserrat,Arial,sans-serif;color:#2c261f;">
+      <div style="max-width:680px;margin:0 auto;background:#fff;border:1px solid #e7dcc8">
+        <div style="padding:18px 24px;background:linear-gradient(90deg,#2f221a,#d8be8d);color:#fff;">
+          <div style="font-family:'Cormorant Garamond',Georgia,serif;font-size:30px;letter-spacing:.08em;">Bar<span style="color:#f2dcac;">Bae</span></div>
+          <div style="font-size:12px;letter-spacing:.18em;text-transform:uppercase;opacity:.9;">Lagerwarnung</div>
+        </div>
+        <div style="padding:24px;">
+          <h1 style="margin:0 0 12px;font-family:'Cormorant Garamond',Georgia,serif;font-size:26px;color:#2f221a;">Lagerbestand unter 20 %</h1>
+          <p style="margin:0 0 16px;color:#5a4f3f;">Folgende Artikel liegen unter dem 20-%-Schwellwert ihres Startbestands. Bitte ggf. nachbestellen.</p>
+          <table style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="background:#f7f1e3;color:#7f7568;text-transform:uppercase;font-size:11px;letter-spacing:.12em;">
+                <th style="padding:8px 12px;text-align:left;">Produkt</th>
+                <th style="padding:8px 12px;text-align:left;">SKU</th>
+                <th style="padding:8px 12px;text-align:right;">Bestand / Start</th>
+                <th style="padding:8px 12px;text-align:right;">Anteil</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+
+  try {
+    console.log(`[MAIL] sendLowStockAlertMail -> to=${recipient} count=${products.length}`);
+    const info = await mailer.sendMail({
+      from: fromAddress,
+      to: recipient,
+      subject,
+      text: `Lagerwarnung – ${products.length} Produkt(e) unter 20 %:\n\n${plainLines.join('\n')}`,
+      html
+    });
+    await logEmail({
+      recipient,
+      subject,
+      status: 'sent',
+      provider_message: info.messageId || 'ok',
+      related_type: 'low-stock-alert',
+      related_id: null
+    });
+    return info;
+  } catch (error) {
+    console.log(`[MAIL] sendLowStockAlertMail failed -> ${error.message}`);
+    await logEmail({
+      recipient,
+      subject,
+      status: 'failed',
+      provider_message: error.message,
+      related_type: 'low-stock-alert',
+      related_id: null
+    });
+    throw error;
+  }
+}
+
+module.exports = { sendInvoiceMail, sendCustomerMail, sendOrderConfirmationMail, sendLowStockAlertMail };

@@ -14,6 +14,8 @@
 
 <form method="post" action="<%= data.formAction %>" enctype="multipart/form-data" class="row g-3">
   <input type="hidden" name="color_stock_json" id="color_stock_json" value="<%= data.product.color_stock_json || '{}' %>" />
+  <input type="hidden" name="size_stock_json" id="size_stock_json" value="<%= data.product.size_stock_json || '{}' %>" />
+  <input type="hidden" name="personalization_fields" id="personalization_fields" value='<%= JSON.stringify(data.personalizationFieldsSelected || []) %>' />
   <div class="col-lg-8">
     <div class="card">
       <div class="card-header">Inhalt</div>
@@ -95,10 +97,35 @@
           <input class="form-check-input" type="checkbox" name="has_size_options" id="has_size_options" <%= Number(data.product.has_size_options) ? 'checked' : '' %> />
           <label class="form-check-label" for="has_size_options">Groessen verfuegbar</label>
         </div>
-        <div id="size_option_list" class="border rounded p-2 bg-light">
+        <div id="size_stock_wrapper" class="border rounded p-2">
           <% if ((data.optionConfig.sizes || []).length) { %>
+            <div class="small text-muted mb-2">Lager je Größe</div>
             <% data.optionConfig.sizes.forEach((size) => { %>
-              <span class="badge text-bg-secondary me-1 mb-1"><%= size %></span>
+              <% const sizeQty = Number((data.sizeStockBySize || {})[size] || 0); %>
+              <div class="row g-2 align-items-center mb-2 size-stock-row">
+                <div class="col-7">
+                  <div class="form-check m-0">
+                    <input
+                      class="form-check-input size-stock-enabled"
+                      type="checkbox"
+                      id="size_enabled_<%= size.replace(/\s+/g, '_') %>"
+                      data-size="<%= size %>"
+                      <%= sizeQty > 0 ? 'checked' : '' %>
+                    />
+                    <label class="form-check-label" for="size_enabled_<%= size.replace(/\s+/g, '_') %>"><%= size %></label>
+                  </div>
+                </div>
+                <div class="col-5">
+                  <input
+                    class="form-control form-control-sm size-stock-qty"
+                    type="number"
+                    min="0"
+                    step="1"
+                    data-size="<%= size %>"
+                    value="<%= sizeQty > 0 ? sizeQty : 0 %>"
+                  />
+                </div>
+              </div>
             <% }) %>
           <% } else { %>
             <span class="text-muted small">Keine globalen Groessen hinterlegt.</span>
@@ -148,14 +175,41 @@
           <input class="form-check-input" type="checkbox" name="has_personalization_options" id="has_personalization_options" <%= Number(data.product.has_personalization_options) ? 'checked' : '' %> />
           <label class="form-check-label" for="has_personalization_options">Personalisierung verfuegbar</label>
         </div>
-        <div id="personalization_option_list" class="border rounded p-2 bg-light">
+        <div id="personalization_option_list" class="border rounded p-2">
           <% if ((data.optionConfig.personalizationFields || []).length) { %>
-            <% data.optionConfig.personalizationFields.forEach((fieldName) => { %>
-              <span class="badge text-bg-info me-1 mb-1"><%= fieldName %></span>
+            <div class="small text-muted mb-2">Welche Felder soll der Kunde ausfüllen können?</div>
+            <% (data.optionConfig.personalizationFields || []).forEach((fieldName, idx) => { %>
+              <% const isSelected = (data.personalizationFieldsSelected || []).indexOf(fieldName) !== -1; %>
+              <div class="form-check personalization-field-row">
+                <input
+                  class="form-check-input personalization-field-checkbox"
+                  type="checkbox"
+                  id="pf_<%= idx %>"
+                  data-field="<%= fieldName %>"
+                  <%= isSelected ? 'checked' : '' %>
+                />
+                <label class="form-check-label" for="pf_<%= idx %>"><%= fieldName %></label>
+              </div>
             <% }) %>
           <% } else { %>
             <span class="text-muted small">Keine globalen Personalisierungsfelder hinterlegt.</span>
           <% } %>
+        </div>
+        <div id="personalization_price_wrapper">
+          <label class="form-label" for="personalization_price">Aufpreis Personalisierung (€)</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text">+€</span>
+            <input
+              class="form-control"
+              type="number"
+              min="0"
+              step="0.01"
+              name="personalization_price"
+              id="personalization_price"
+              value="<%= Number(data.product.personalization_price || 0).toFixed(2) %>"
+            />
+          </div>
+          <div class="form-text">Wird auf den Produktpreis aufgeschlagen, sobald der Kunde Personalisierung eingibt.</div>
         </div>
         <input type="hidden" name="personalization_type" id="personalization_type" value="<%= data.product.personalization_type || 'none' %>" />
       </div>
@@ -278,7 +332,10 @@
 
     const form = document.querySelector('form[action]');
     const sizeToggle = document.getElementById('has_size_options');
-    const sizeList = document.getElementById('size_option_list');
+    const sizeStockWrapper = document.getElementById('size_stock_wrapper');
+    const sizeStockEnabled = Array.from(document.querySelectorAll('.size-stock-enabled'));
+    const sizeStockQtyInputs = Array.from(document.querySelectorAll('.size-stock-qty'));
+    const sizeStockJson = document.getElementById('size_stock_json');
     const colorToggle = document.getElementById('has_color_options');
     const colorStockWrapper = document.getElementById('color_stock_wrapper');
     const colorStockEnabled = Array.from(document.querySelectorAll('.color-stock-enabled'));
@@ -288,9 +345,21 @@
     const personalizationList = document.getElementById('personalization_option_list');
     const personalizationType = document.getElementById('personalization_type');
 
-    const syncSizeToggle = () => {
-      if (!sizeToggle || !sizeList) return;
-      sizeList.classList.toggle('opacity-50', !sizeToggle.checked);
+    const syncSizeRows = () => {
+      const enabledGlobal = sizeToggle && sizeToggle.checked;
+      if (sizeStockWrapper) {
+        sizeStockWrapper.classList.toggle('opacity-50', !enabledGlobal);
+      }
+      sizeStockEnabled.forEach((checkbox) => {
+        checkbox.disabled = !enabledGlobal;
+      });
+      sizeStockQtyInputs.forEach((input) => {
+        const rowEnabled = enabledGlobal && !!sizeStockEnabled.find((box) => box.dataset.size === input.dataset.size && box.checked);
+        input.disabled = !rowEnabled;
+        if (!rowEnabled) {
+          input.value = '0';
+        }
+      });
     };
 
     const syncColorRows = () => {
@@ -310,37 +379,82 @@
       });
     };
 
+    const personalizationPriceWrapper = document.getElementById('personalization_price_wrapper');
+    const personalizationPriceInput = document.getElementById('personalization_price');
+    const personalizationFieldsHidden = document.getElementById('personalization_fields');
+    const personalizationFieldCheckboxes = Array.from(document.querySelectorAll('.personalization-field-checkbox'));
+
     const syncPersonalizationToggle = () => {
       if (!personalizationToggle || !personalizationList || !personalizationType) return;
       const enabled = personalizationToggle.checked;
       personalizationList.classList.toggle('opacity-50', !enabled);
       personalizationType.value = enabled ? 'name' : 'none';
+      if (personalizationPriceWrapper) {
+        personalizationPriceWrapper.classList.toggle('opacity-50', !enabled);
+      }
+      if (personalizationPriceInput) {
+        personalizationPriceInput.disabled = !enabled;
+      }
+      personalizationFieldCheckboxes.forEach((checkbox) => {
+        checkbox.disabled = !enabled;
+      });
     };
 
-    if (sizeToggle) sizeToggle.addEventListener('change', syncSizeToggle);
+    if (sizeToggle) sizeToggle.addEventListener('change', syncSizeRows);
     if (colorToggle) colorToggle.addEventListener('change', syncColorRows);
     if (personalizationToggle) personalizationToggle.addEventListener('change', syncPersonalizationToggle);
+    sizeStockEnabled.forEach((checkbox) => checkbox.addEventListener('change', syncSizeRows));
     colorStockEnabled.forEach((checkbox) => checkbox.addEventListener('change', syncColorRows));
 
-    if (form && colorStockJson) {
+    if (form) {
       form.addEventListener('submit', () => {
-        const payload = {};
-        if (colorToggle && colorToggle.checked) {
-          colorStockEnabled.forEach((checkbox) => {
-            if (!checkbox.checked) return;
-            const color = checkbox.dataset.color;
-            const qtyInput = colorStockQtyInputs.find((item) => item.dataset.color === color);
-            const qty = Number(qtyInput ? qtyInput.value : 0);
-            if (Number.isFinite(qty) && qty > 0) {
-              payload[color] = Math.floor(qty);
-            }
-          });
+        if (colorStockJson) {
+          const colorPayload = {};
+          if (colorToggle && colorToggle.checked) {
+            colorStockEnabled.forEach((checkbox) => {
+              if (!checkbox.checked) return;
+              const color = checkbox.dataset.color;
+              const qtyInput = colorStockQtyInputs.find((item) => item.dataset.color === color);
+              const qty = Number(qtyInput ? qtyInput.value : 0);
+              if (Number.isFinite(qty) && qty > 0) {
+                colorPayload[color] = Math.floor(qty);
+              }
+            });
+          }
+          colorStockJson.value = JSON.stringify(colorPayload);
         }
-        colorStockJson.value = JSON.stringify(payload);
+
+        if (sizeStockJson) {
+          const sizePayload = {};
+          if (sizeToggle && sizeToggle.checked) {
+            sizeStockEnabled.forEach((checkbox) => {
+              if (!checkbox.checked) return;
+              const size = checkbox.dataset.size;
+              const qtyInput = sizeStockQtyInputs.find((item) => item.dataset.size === size);
+              const qty = Number(qtyInput ? qtyInput.value : 0);
+              if (Number.isFinite(qty) && qty > 0) {
+                sizePayload[size] = Math.floor(qty);
+              }
+            });
+          }
+          sizeStockJson.value = JSON.stringify(sizePayload);
+        }
+
+        if (personalizationFieldsHidden) {
+          const personalizationPayload = [];
+          if (personalizationToggle && personalizationToggle.checked) {
+            personalizationFieldCheckboxes.forEach((checkbox) => {
+              if (!checkbox.checked) return;
+              const field = String(checkbox.dataset.field || '').trim();
+              if (field) personalizationPayload.push(field);
+            });
+          }
+          personalizationFieldsHidden.value = JSON.stringify(personalizationPayload);
+        }
       });
     }
 
-    syncSizeToggle();
+    syncSizeRows();
     syncColorRows();
     syncPersonalizationToggle();
   })();

@@ -49,13 +49,17 @@
             <h4>Farbe</h4>
             <div class="option-row colors">
               <% colorOptions.forEach((color, idx) => { %>
+                <% const colorStockQty = Number((colorStock || {})[color] || 0); %>
+                <% const colorOos = Number(product.has_color_options) && Object.keys(colorStock || {}).length && colorStockQty <= 0; %>
                 <button
                   type="button"
-                  class="option-chip color-chip <%= idx === 0 ? 'active' : '' %>"
+                  class="option-chip color-chip <%= idx === 0 ? 'active' : '' %> <%= colorOos ? 'option-chip-oos' : '' %>"
                   data-option-color="<%= color %>"
-                  title="<%= color %>"
+                  title="<%= color %><%= colorOos ? ' (ausverkauft)' : '' %>"
+                  <%= colorOos ? 'disabled' : '' %>
                 >
-                  <span><%= color %></span>
+                  <span class="color-swatch" aria-hidden="true"></span>
+                  <span class="color-label"><%= color %></span>
                 </button>
               <% }) %>
             </div>
@@ -65,27 +69,47 @@
             <h4>Größe</h4>
             <div class="option-row sizes">
               <% sizeOptions.forEach((size, idx) => { %>
-                <button type="button" class="option-chip size-chip <%= idx === 0 ? 'active' : '' %>" data-option-size="<%= size %>"><%= size %></button>
+                <% const sizeStockQty = Number((sizeStock || {})[size] || 0); %>
+                <% const sizeOos = Number(product.has_size_options) && Object.keys(sizeStock || {}).length && sizeStockQty <= 0; %>
+                <button
+                  type="button"
+                  class="option-chip size-chip <%= idx === 0 ? 'active' : '' %> <%= sizeOos ? 'option-chip-oos' : '' %>"
+                  data-option-size="<%= size %>"
+                  title="<%= size %><%= sizeOos ? ' (ausverkauft)' : '' %>"
+                  <%= sizeOos ? 'disabled' : '' %>
+                ><%= size %></button>
               <% }) %>
             </div>
           <% } %>
 
           <div class="product-usps">
-            <span><i class="bi bi-truck"></i> Gratis Versand</span>
-            <span><i class="bi bi-arrow-counterclockwise"></i> 30 Tage Rückgabe</span>
+            <span><i class="bi bi-truck"></i> Gratis Versand ab 90&nbsp;€</span>
+            <span><i class="bi bi-arrow-counterclockwise"></i> 14 Tage Rückgabe</span>
             <span><i class="bi bi-shield-check"></i> Sichere Zahlung</span>
           </div>
         </div>
 
         <aside class="product-buybox">
           <% if (personalizationOptions.length) { %>
-            <h4><i class="bi bi-pencil"></i> Personalisierung</h4>
+            <h4>
+              <i class="bi bi-pencil"></i> Personalisierung
+              <% if (Number(product.personalization_price) > 0) { %>
+                <span class="personalize-surcharge">+<%= Number(product.personalization_price).toFixed(2) %> €</span>
+              <% } %>
+            </h4>
             <div class="personalize-list" id="productPersonalize">
               <button type="button" class="personalize-item personalize-none-btn active" id="personalizeNoneBtn" aria-pressed="true">
                 Keine
               </button>
               <% personalizationOptions.forEach((field, idx) => { %>
                 <% const fid = 'pf-' + String(field).replace(/[^a-zA-Z0-9_-]/g, '') + '-' + idx; %>
+                <%
+                  const fieldStr = String(field);
+                  const maxMatch = fieldStr.match(/max(?:imal)?\s*(\d{1,3})\s*(buchstaben|zeichen|letters?|characters?)?/i);
+                  const fieldMaxLength = maxMatch ? Math.max(1, Math.min(200, parseInt(maxMatch[1], 10))) : 200;
+                  const isLettersOnly = /buchstaben|letters?/i.test(fieldStr);
+                  const fieldPattern = isLettersOnly ? `[A-Za-z\u00C4\u00D6\u00DC\u00E4\u00F6\u00FC\u00DF\\s]{1,${fieldMaxLength}}` : null;
+                %>
                 <div class="personalize-item personalize-item-input">
                   <label class="visually-hidden" for="<%= fid %>"><%= field %></label>
                   <input
@@ -93,8 +117,12 @@
                     id="<%= fid %>"
                     class="personalize-text-input"
                     data-personalize-field="<%= field %>"
+                    data-personalize-maxlength="<%= fieldMaxLength %>"
+                    data-personalize-letters-only="<%= isLettersOnly ? '1' : '0' %>"
                     placeholder="<%= field %>"
-                    maxlength="200"
+                    maxlength="<%= fieldMaxLength %>"
+                    <% if (fieldPattern) { %>pattern="<%= fieldPattern %>"<% } %>
+                    <% if (isLettersOnly) { %>inputmode="text" autocapitalize="characters"<% } %>
                     autocomplete="off"
                   />
                 </div>
@@ -151,7 +179,9 @@
         initialQuery: "",
         productPage: {
           unitPrice: <%= Number(product.price || 0).toFixed(2) %>,
-          colorStock: <%- JSON.stringify(colorStock).replace(/</g, '\\u003c') %>
+          personalizationPrice: <%= Number(product.personalization_price || 0).toFixed(2) %>,
+          colorStock: <%- JSON.stringify(colorStock).replace(/</g, '\\u003c') %>,
+          sizeStock: <%- JSON.stringify(sizeStock || {}).replace(/</g, '\\u003c') %>
         }
       };
     </script>

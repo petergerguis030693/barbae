@@ -965,10 +965,52 @@ a {
 
 .color-chip {
   border-radius: 999px;
-  min-width: 36px;
   min-height: 36px;
-  padding: 0 12px;
+  padding: 4px 14px 4px 6px;
   font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff;
+  color: #2c261f;
+}
+
+.color-chip.active {
+  border-color: #2f221a;
+  box-shadow: 0 0 0 1px #2f221a inset;
+}
+
+.color-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-block;
+  background: #efe6d2;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+  flex-shrink: 0;
+}
+
+.color-swatch-unknown {
+  background:
+    linear-gradient(45deg, transparent 45%, rgba(0, 0, 0, 0.25) 45%, rgba(0, 0, 0, 0.25) 55%, transparent 55%),
+    #f1ece2;
+}
+
+.color-label {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.option-chip-oos {
+  opacity: 0.45;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+.option-chip-oos:hover {
+  background: inherit;
 }
 
 .product-usps {
@@ -993,6 +1035,20 @@ a {
 .personalize-list {
   display: grid;
   gap: 8px;
+}
+
+.personalize-surcharge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 2px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: linear-gradient(90deg, #2f221a, #c79f5d);
+  border-radius: 999px;
+  vertical-align: middle;
 }
 
 /* Wie zuvor: gestapelte Kästchen; Eingaben liegen im Kasten ohne zweite Umrandung */

@@ -17,6 +17,7 @@ const seoRoutes = require('./seo.routes');
 const settingsRoutes = require('./settings.routes');
 const productOptionRoutes = require('./product-options.routes');
 const blogRoutes = require('./blog.routes');
+const testimonialRoutes = require('./testimonials.routes');
 const { logout } = require('../../controllers/admin/auth.controller');
 
 const router = express.Router();
@@ -39,5 +40,6 @@ router.use(pagesRoutes);
 router.use(seoRoutes);
 router.use(settingsRoutes);
 router.use(productOptionRoutes);
+router.use(testimonialRoutes);
 
 module.exports = router;

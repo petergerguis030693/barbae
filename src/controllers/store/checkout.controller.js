@@ -1,5 +1,5 @@
 const { listCategories } = require('../../services/category.service');
-const { listProducts, getProductsByIds } = require('../../services/product.service');
+const { listProducts, getProductsByIds, decrementStockForOrder } = require('../../services/product.service');
 const { listSettings } = require('../../services/settings.service');
 const { getSeoPageBySlug } = require('../../services/seo.service');
 const {
@@ -32,6 +32,7 @@ const {
 const { sendCustomerMail } = require('../../services/email.service');
 const { sendInvoiceMail } = require('../../services/email.service');
 const { sendOrderConfirmationMail } = require('../../services/email.service');
+const { sendLowStockAlertMail } = require('../../services/email.service');
 const { validateCouponForCheckout, markCouponUsed } = require('../../services/coupon.service');
 const {
   getOrCreateRegisterCaptcha,
@@ -111,6 +112,33 @@ function buildCategoryUrl(category, byId) {
   return `/${encodeURIComponent(parentSlug)}/${encodeURIComponent(ownSlug)}`;
 }
 
+function sanitizePersonalizationValue(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return '';
+  return text
+    .split('|')
+    .map((part) => {
+      const [labelRaw, ...valueParts] = part.split(':');
+      const label = String(labelRaw || '').trim();
+      const value = valueParts.join(':').trim();
+      if (!label || !value) return null;
+
+      const maxMatch = label.match(/max(?:imal)?\s*(\d{1,3})\s*(buchstaben|zeichen|letters?|characters?)?/i);
+      const maxLen = maxMatch ? Math.max(1, Math.min(200, parseInt(maxMatch[1], 10))) : 200;
+      const lettersOnly = /buchstaben|letters?/i.test(label);
+
+      let cleaned = value;
+      if (lettersOnly) {
+        cleaned = cleaned.replace(/[^A-Za-z\u00C4\u00D6\u00DC\u00E4\u00F6\u00FC\u00DF\s]/g, '');
+      }
+      cleaned = cleaned.slice(0, maxLen).trim();
+      if (!cleaned) return null;
+      return `${label}: ${cleaned}`;
+    })
+    .filter(Boolean)
+    .join(' | ');
+}
+
 function parseCartJson(value) {
   try {
     const parsed = JSON.parse(String(value || '[]'));
@@ -125,7 +153,9 @@ function parseCartJson(value) {
           item.selectedOptions && typeof item.selectedOptions === 'object' && !Array.isArray(item.selectedOptions)
             ? Object.keys(item.selectedOptions).reduce((acc, key) => {
                 const v = String(item.selectedOptions[key] || '').trim();
-                if (v) acc[key] = v;
+                if (!v) return acc;
+                acc[key] = key === 'personalization' ? sanitizePersonalizationValue(v) : v;
+                if (!acc[key]) delete acc[key];
                 return acc;
               }, {})
             : {}
@@ -815,15 +845,18 @@ async function placeOrder(req, res) {
       continue;
     }
     const qty = Math.max(1, Number(cartItem.qty || 1));
-    const unitPrice = Number(product.price || 0);
+    const selectedOptions = cartItem.selectedOptions || {};
+    const hasPersonalization = !!(Number(product.has_personalization_options) && String(selectedOptions.personalization || '').trim());
+    const personalizationSurcharge = hasPersonalization ? Math.max(0, Number(product.personalization_price || 0)) : 0;
+    const unitPrice = Number((Number(product.price || 0) + personalizationSurcharge).toFixed(2));
     orderItems.push({
       productId: Number(product.id),
       qty,
       unitPrice,
       lineTotal: Number((unitPrice * qty).toFixed(2)),
       weightGrams: Math.max(0, Number(product.weight_grams || 0)),
-      selectedOptionsJson: JSON.stringify(cartItem.selectedOptions || {}),
-      optionSummary: Object.entries(cartItem.selectedOptions || {})
+      selectedOptionsJson: JSON.stringify(selectedOptions),
+      optionSummary: Object.entries(selectedOptions)
         .map(([k, v]) => `${k}: ${v}`)
         .join(' | ')
     });
@@ -884,6 +917,20 @@ async function placeOrder(req, res) {
   console.log(
     `[ORDER] placeOrder success orderId=${created.orderId} orderNumber=${created.orderNumber} customerId=${customer.id} customerEmail=${customer.email || '-'} total=${created.totals.gross} shipping=${created.totals.shipping?.gross || 0} fulfillment=${fulfillmentMethod}`
   );
+
+  try {
+    const decrement = await decrementStockForOrder(orderItems);
+    if (decrement?.lowStockProducts?.length) {
+      const alertRecipient = String(settingsMap.low_stock_alert_email || 'shopping@barbae.at').trim() || 'shopping@barbae.at';
+      try {
+        await sendLowStockAlertMail({ recipient: alertRecipient, products: decrement.lowStockProducts });
+      } catch (mailError) {
+        console.log('[ORDER] low-stock alert mail failed:', mailError?.message || mailError);
+      }
+    }
+  } catch (stockError) {
+    console.log('[ORDER] stock decrement failed:', stockError?.message || stockError);
+  }
 
   req.session.checkoutLastOrder = {
     orderNumber: created.orderNumber,
@@ -1068,7 +1115,10 @@ async function checkoutSummary(req, res) {
     const product = byId.get(Number(cartItem.productId));
     if (!product || Number(product.is_active) !== 1) continue;
     const qty = Math.max(1, Number(cartItem.qty || 1));
-    const unitPrice = Number(product.price || 0);
+    const selectedOptions = cartItem.selectedOptions || {};
+    const hasPersonalization = !!(Number(product.has_personalization_options) && String(selectedOptions.personalization || '').trim());
+    const personalizationSurcharge = hasPersonalization ? Math.max(0, Number(product.personalization_price || 0)) : 0;
+    const unitPrice = Number(product.price || 0) + personalizationSurcharge;
     orderItems.push({
       qty,
       lineTotal: Number((unitPrice * qty).toFixed(2)),

@@ -1,25 +1,35 @@
-<section class="section testimonials-section">
-  <div class="highlights-head">
-    <p>WAS UNSERE KUNDINNEN SAGEN</p>
-    <h3>Kundenbewertungen</h3>
-    <span></span>
-  </div>
+<%
+  const fallbackTestimonials = [
+    { author_name: 'Sophie M.', rating: 5, quote: 'Die Produkte sind einfach traumhaft - die Qualität und der Duft übertreffen alles. Mein Favorit ist das Keratin Gloss Serum.' },
+    { author_name: 'Lena K.', rating: 5, quote: 'Ich bin verliebt in die Satin Kollektion. Das Slip Dress sitzt perfekt und fuehlt sich luxurioes an. BarBae ist meine Lieblingsmarke.' },
+    { author_name: 'Anna W.', rating: 5, quote: 'Endlich ein Shop, der Beauty und Fashion vereint. Die Bridal Box war das perfekte Geschenk für meine beste Freundin.' }
+  ];
+  const rawList = (typeof homeTestimonials !== 'undefined' && Array.isArray(homeTestimonials) && homeTestimonials.length)
+    ? homeTestimonials
+    : fallbackTestimonials;
+  const items = rawList.slice(0, 12);
+  const renderStars = (value) => {
+    const filled = Math.max(0, Math.min(5, Math.round(Number(value || 5))));
+    return '★'.repeat(filled) + '☆'.repeat(5 - filled);
+  };
+%>
 
-  <div class="testimonials-grid">
-    <article class="testimonial-card">
-      <div class="stars">★★★★★</div>
-      <p>"Die Produkte sind einfach traumhaft - die Qualität und der Duft übertreffen alles. Mein Favorit ist das Keratin Gloss Serum."</p>
-      <strong>Sophie M.</strong>
-    </article>
-    <article class="testimonial-card">
-      <div class="stars">★★★★★</div>
-      <p>"Ich bin verliebt in die Satin Kollektion. Das Slip Dress sitzt perfekt und fuehlt sich luxurioes an. BarBae ist meine Lieblingsmarke."</p>
-      <strong>Lena K.</strong>
-    </article>
-    <article class="testimonial-card">
-      <div class="stars">★★★★★</div>
-      <p>"Endlich ein Shop, der Beauty und Fashion vereint. Die Bridal Box war das perfekte Geschenk für meine beste Freundin."</p>
-      <strong>Anna W.</strong>
-    </article>
-  </div>
-</section>
+<% if (items.length) { %>
+  <section class="section testimonials-section">
+    <div class="highlights-head">
+      <p>WAS UNSERE KUNDINNEN SAGEN</p>
+      <h3>Kundenbewertungen</h3>
+      <span></span>
+    </div>
+
+    <div class="testimonials-grid">
+      <% items.forEach((item) => { %>
+        <article class="testimonial-card">
+          <div class="stars"><%= renderStars(item.rating) %></div>
+          <p>"<%= item.quote %>"</p>
+          <strong><%= item.author_name %></strong>
+        </article>
+      <% }) %>
+    </div>
+  </section>
+<% } %>

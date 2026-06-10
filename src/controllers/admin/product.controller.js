@@ -9,6 +9,18 @@ function toRelativeUploadPath(file) {
   return index >= 0 ? normalized.slice(index + marker.length) : normalized;
 }
 
+function sanitizeProductSlug(value) {
+  const raw = String(value || '').trim();
+  if (!raw) return '';
+  return raw
+    .replace(/^https?:\/\/[^/]+/i, '')
+    .replace(/^\/+|\/+$/g, '')
+    .replace(/^products?\//i, '')
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-_]/gi, '')
+    .toLowerCase();
+}
+
 function parseLines(value) {
   return String(value || '')
     .split(/\r?\n/)
@@ -16,7 +28,7 @@ function parseLines(value) {
     .filter(Boolean);
 }
 
-function parseColorStockJson(rawValue) {
+function parseOptionStockJson(rawValue) {
   if (!rawValue) return {};
   try {
     const parsed = JSON.parse(String(rawValue));
@@ -25,11 +37,11 @@ function parseColorStockJson(rawValue) {
     }
 
     const normalized = {};
-    Object.entries(parsed).forEach(([color, qty]) => {
-      const key = String(color || '').trim();
-      if (!key) return;
+    Object.entries(parsed).forEach(([key, qty]) => {
+      const name = String(key || '').trim();
+      if (!name) return;
       const amount = Number(qty);
-      normalized[key] = Number.isFinite(amount) && amount > 0 ? Math.floor(amount) : 0;
+      normalized[name] = Number.isFinite(amount) && amount > 0 ? Math.floor(amount) : 0;
     });
     return normalized;
   } catch (error) {
@@ -37,15 +49,45 @@ function parseColorStockJson(rawValue) {
   }
 }
 
-function toStorageColorStockJson(rawValue) {
-  const parsed = parseColorStockJson(rawValue);
-  const filtered = Object.entries(parsed).reduce((acc, [color, qty]) => {
+function toStorageStockJson(rawValue) {
+  const parsed = parseOptionStockJson(rawValue);
+  const filtered = Object.entries(parsed).reduce((acc, [name, qty]) => {
     if (qty > 0) {
-      acc[color] = qty;
+      acc[name] = qty;
     }
     return acc;
   }, {});
   return JSON.stringify(filtered);
+}
+
+const parseColorStockJson = parseOptionStockJson;
+const toStorageColorStockJson = toStorageStockJson;
+const parseSizeStockJson = parseOptionStockJson;
+const toStorageSizeStockJson = toStorageStockJson;
+
+function parsePersonalizationFieldsJson(rawValue) {
+  if (!rawValue) return [];
+  try {
+    const parsed = JSON.parse(String(rawValue));
+    if (!Array.isArray(parsed)) return [];
+    return parsed.map((item) => String(item || '').trim()).filter(Boolean);
+  } catch (_error) {
+    return [];
+  }
+}
+
+function toStoragePersonalizationFieldsJson(rawValue, availableFields = []) {
+  let list = [];
+  if (Array.isArray(rawValue)) {
+    list = rawValue;
+  } else if (typeof rawValue === 'string' && rawValue.trim()) {
+    list = parsePersonalizationFieldsJson(rawValue);
+  }
+  const allowed = new Set(availableFields.map((field) => String(field || '').trim()).filter(Boolean));
+  const filtered = list
+    .map((value) => String(value || '').trim())
+    .filter((value) => value && (!allowed.size || allowed.has(value)));
+  return JSON.stringify(Array.from(new Set(filtered)));
 }
 
 async function getProductOptionConfig() {
@@ -99,7 +141,10 @@ async function renderCreate(req, res) {
         has_size_options: 0,
         has_personalization_options: 0,
         color_stock_json: '{}',
+        size_stock_json: '{}',
         personalization_type: 'none',
+        personalization_price: '0.00',
+        personalization_fields_json: '[]',
         category_id: '',
         featured_image: null,
         is_active: 1,
@@ -112,6 +157,8 @@ async function renderCreate(req, res) {
       categories,
       optionConfig,
       colorStockByColor: {},
+      sizeStockBySize: {},
+      personalizationFieldsSelected: [],
       gallery: []
     }
   });
@@ -142,6 +189,8 @@ async function renderEdit(req, res) {
       categories,
       optionConfig,
       colorStockByColor: parseColorStockJson(product.color_stock_json),
+      sizeStockBySize: parseSizeStockJson(product.size_stock_json),
+      personalizationFieldsSelected: parsePersonalizationFieldsJson(product.personalization_fields_json),
       gallery
     }
   });
@@ -150,16 +199,23 @@ async function renderEdit(req, res) {
 async function create(req, res) {
   const featuredImage = toRelativeUploadPath(req.files?.featured_image?.[0]);
   const gallery = (req.files?.gallery || []).map((file) => toRelativeUploadPath(file));
+  const optionConfig = await getProductOptionConfig();
 
   await productService.createProduct({
     ...req.body,
+    slug: sanitizeProductSlug(req.body.slug),
     is_active: req.body.is_active ? 1 : 0,
     is_bestseller: req.body.is_bestseller ? 1 : 0,
     has_color_options: req.body.has_color_options ? 1 : 0,
     has_size_options: req.body.has_size_options ? 1 : 0,
     color_stock_json: req.body.has_color_options ? toStorageColorStockJson(req.body.color_stock_json) : '{}',
+    size_stock_json: req.body.has_size_options ? toStorageSizeStockJson(req.body.size_stock_json) : '{}',
     has_personalization_options: req.body.has_personalization_options ? 1 : 0,
     personalization_type: req.body.has_personalization_options ? 'name' : 'none',
+    personalization_price: req.body.has_personalization_options ? Math.max(0, Number(req.body.personalization_price || 0)) : 0,
+    personalization_fields_json: req.body.has_personalization_options
+      ? toStoragePersonalizationFieldsJson(req.body.personalization_fields, optionConfig.personalizationFields)
+      : '[]',
     featured_image: featuredImage,
     gallery
   });
@@ -169,16 +225,23 @@ async function create(req, res) {
 async function update(req, res) {
   const featuredImage = toRelativeUploadPath(req.files?.featured_image?.[0]);
   const gallery = (req.files?.gallery || []).map((file) => toRelativeUploadPath(file));
+  const optionConfig = await getProductOptionConfig();
 
   await productService.updateProduct(req.params.id, {
     ...req.body,
+    slug: sanitizeProductSlug(req.body.slug),
     is_active: req.body.is_active ? 1 : 0,
     is_bestseller: req.body.is_bestseller ? 1 : 0,
     has_color_options: req.body.has_color_options ? 1 : 0,
     has_size_options: req.body.has_size_options ? 1 : 0,
     color_stock_json: req.body.has_color_options ? toStorageColorStockJson(req.body.color_stock_json) : '{}',
+    size_stock_json: req.body.has_size_options ? toStorageSizeStockJson(req.body.size_stock_json) : '{}',
     has_personalization_options: req.body.has_personalization_options ? 1 : 0,
     personalization_type: req.body.has_personalization_options ? 'name' : 'none',
+    personalization_price: req.body.has_personalization_options ? Math.max(0, Number(req.body.personalization_price || 0)) : 0,
+    personalization_fields_json: req.body.has_personalization_options
+      ? toStoragePersonalizationFieldsJson(req.body.personalization_fields, optionConfig.personalizationFields)
+      : '[]',
     featured_image: featuredImage,
     gallery
   });

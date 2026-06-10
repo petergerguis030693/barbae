@@ -18,6 +18,7 @@ router.get('/magazin/:slug', renderMagazineArticle);
 router.get('/kontakt', contactController.renderContact);
 router.post('/kontakt', contactController.submitContact);
 router.get('/product/:ref', renderProduct);
+router.get('/products/:ref', (req, res) => res.redirect(301, `/product/${encodeURIComponent(req.params.ref)}`));
 router.get('/api/cart', cartController.getCart);
 router.post('/api/cart/sync', cartController.syncCart);
 router.get('/account', checkoutController.renderAccount);
